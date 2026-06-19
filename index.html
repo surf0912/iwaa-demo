@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IWAA Calculator — Demo (Version B)</title>
+<style>
+  :root {
+    --red: #F0112D;
+    --red-dark: #C90D24;
+    --red-soft: #FDE3E7;
+    --ink: #1C1C1E;
+    --gray-label: #8A8A8E;
+    --field: #EFEFF1;
+    --underline: #2C2C2E;
+    --white: #FFFFFF;
+    --bg-outer: #D9DADE;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg-outer);
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 18px 0;
+    min-height: 100vh;
+  }
+  .phone {
+    width: 100%;
+    max-width: 430px;
+    background: var(--white);
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.28);
+    display: flex;
+    flex-direction: column;
+  }
+  /* ===== Red app header ===== */
+  .appbar { background: var(--red); color: #fff; padding: 20px 22px 24px; }
+  .appbar .statusrow {
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 700; font-size: 15px; margin-bottom: 20px;
+  }
+  .appbar .navrow {
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 700; font-size: 16.5px;
+  }
+  .appbar .back { display: flex; align-items: center; gap: 10px; }
+  .appbar .back .arrow { font-size: 20px; }
+  /* ===== Title ===== */
+  .title-block {
+    background: var(--white);
+    padding: 22px 22px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .title-block .icon { display: flex; align-items: center; }
+  .title-block h1 { color: var(--red); font-size: 25px; font-weight: 800; letter-spacing: -0.3px; }
+  /* ===== Content ===== */
+  main { background: #FAFAFB; padding: 14px 18px 30px; flex: 1; }
+
+  /* Tooltip */
+  .tip { position: relative; display: inline-flex; vertical-align: middle; margin-left: 5px; }
+  .tip .i {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #C0C0C6; color: #fff;
+    font-size: 10.5px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none;
+  }
+  .tip .pop {
+    position: absolute; bottom: 145%; right: -8px;
+    background: #2C2C2E; color: #fff;
+    font-size: 11.5px; font-weight: 400; line-height: 1.45;
+    padding: 8px 11px; border-radius: 9px;
+    width: max-content; max-width: 215px;
+    display: none; z-index: 60; text-align: left;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  }
+  .tip .pop::after {
+    content: ""; position: absolute; top: 100%; right: 12px;
+    border: 5px solid transparent; border-top-color: #2C2C2E;
+  }
+  .tip.open .pop { display: block; }
+  @media (hover: hover) { .tip:hover .pop { display: block; } }
+
+  /* Filled field */
+  .field {
+    background: var(--field);
+    border-radius: 10px 10px 0 0;
+    border-bottom: 2px solid var(--underline);
+    padding: 10px 14px 9px;
+    margin-bottom: 13px;
+  }
+  .field .flabel {
+    font-size: 13px; color: var(--gray-label); margin-bottom: 4px;
+    display: flex; align-items: center;
+  }
+  .field .frow { display: flex; align-items: baseline; gap: 8px; }
+  .field .prefix { font-size: 16px; color: var(--ink); }
+  .field input {
+    flex: 1; border: none; background: transparent;
+    font-size: 18px; font-weight: 500; color: var(--ink);
+    text-align: right; width: 100%; font-family: inherit;
+  }
+  .field input:focus { outline: none; }
+  .field:focus-within { border-bottom-color: var(--red); }
+  .field input::-webkit-outer-spin-button,
+  .field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .field input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+  /* Age with stepper buttons */
+  .age-field { width: 200px; }
+  .age-field .frow { align-items: center; }
+  .age-field input { text-align: center; font-size: 19px; }
+  .stepbtn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: none; cursor: pointer;
+    background: var(--white); color: var(--red);
+    font-size: 18px; font-weight: 800; line-height: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    font-family: inherit;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stepbtn:active { background: var(--red); color: #fff; }
+
+  /* Income source chips — multi-select */
+  .chips-label { font-size: 13px; color: var(--gray-label); margin: 0 4px 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; margin: 0 0 16px; }
+  .chip {
+    border: none; cursor: pointer;
+    background: var(--field); color: var(--ink);
+    font-size: 13.5px; font-weight: 600;
+    padding: 11px 14px; border-radius: 11px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+    flex: 1 1 auto; justify-content: center;
+    white-space: nowrap;
+  }
+  .chip .tick { display: none; font-size: 12px; }
+  .chip.sel { background: var(--red); color: #fff; }
+  .chip.sel .tick { display: inline; }
+
+  /* Red section bar */
+  .owner-bar {
+    background: var(--red); color: #fff;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    margin: 0 -18px;
+    font-weight: 800; font-size: 16px;
+    cursor: pointer; user-select: none;
+  }
+  .owner-bar .name { flex: 1; }
+  .owner-bar .sub-mini { font-size: 13px; font-weight: 600; opacity: 0.95; }
+  .owner-bar .chev { font-size: 12px; transition: transform .2s; }
+  .owner-bar .remove {
+    background: rgba(255,255,255,0.22);
+    border: none; color: #fff;
+    width: 26px; height: 26px; border-radius: 50%;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: inherit; line-height: 1;
+  }
+  .person-body { padding: 16px 2px 4px; }
+  .person.collapsed .person-body { display: none; }
+  .person.collapsed .owner-bar .chev { transform: rotate(180deg); }
+
+  /* Add person button */
+  .add-person {
+    width: 100%;
+    background: var(--white);
+    border: 2px dashed #E3A6AE;
+    color: var(--red);
+    border-radius: 14px;
+    padding: 12px;
+    font-size: 15px; font-weight: 800;
+    cursor: pointer; font-family: inherit;
+    margin: 14px 0 6px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .add-person .plus {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--red); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; line-height: 1;
+  }
+
+  /* Result card */
+  .result {
+    background: var(--white);
+    border-radius: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    padding: 20px 18px 16px;
+    margin: 18px 0 14px;
+    text-align: center;
+  }
+  .result .rlabel { color: var(--red); font-weight: 800; font-size: 17px; display: inline-flex; align-items: center; }
+  .result .rvalue { font-size: 56px; font-weight: 800; line-height: 1.15; letter-spacing: -1px; }
+  .result .runit { font-weight: 700; font-size: 15px; }
+  .result .tip .pop { right: auto; left: 50%; transform: translateX(-50%); }
+  .result .tip .pop::after { right: auto; left: 50%; transform: translateX(-50%); }
+
+  /* Breakdown */
+  .breakdown {
+    background: var(--white);
+    border-radius: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    padding: 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .breakdown h3 { font-size: 15px; font-weight: 800; margin-bottom: 12px; }
+  .breakdown table { width: 100%; border-collapse: collapse; }
+  .breakdown td, .breakdown th { padding: 7px 4px; text-align: right; }
+  .breakdown th { color: var(--gray-label); font-weight: 600; font-size: 12px; border-bottom: 1px solid #EEE; }
+  .breakdown td:first-child, .breakdown th:first-child { text-align: left; }
+  .breakdown tr.total td { border-top: 1.5px solid var(--ink); font-weight: 800; color: var(--red); }
+
+  /* Demo buttons */
+  .demo-bar { display: flex; gap: 12px; margin-top: 4px; }
+  .demo-bar button {
+    flex: 1; border: none; border-radius: 14px;
+    padding: 14px; font-size: 15px; font-weight: 800;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-sample { background: var(--red); color: #fff; box-shadow: 0 3px 10px rgba(240,17,45,0.35); }
+  .btn-sample:active { background: var(--red-dark); }
+  .btn-reset { background: var(--white); color: var(--red); border: 2px solid var(--red); }
+
+  /* Monthly / Annually segmented toggle (Variable Income) */
+  .seg { margin-left: auto; display: inline-flex; background: #fff; border-radius: 8px; padding: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .seg-btn { border: none; background: transparent; font-family: inherit; font-size: 11px; font-weight: 700; color: var(--gray-label); padding: 4px 9px; border-radius: 6px; cursor: pointer; }
+  .seg-btn.sel { background: var(--red); color: #fff; }
+  .seg-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+  /* Greyed-out (mutually-exclusive) field */
+  .field.disabled { opacity: 0.45; }
+  .field.disabled input { cursor: not-allowed; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="appbar">
+    <div class="statusrow"><span id="clock">9:41</span><span>&#9679;&#9679;&#9679;</span></div>
+    <div class="navrow">
+      <span class="back"><span class="arrow">&#8592;</span> Back</span>
+      <span>Do Not Disturb &#128276;</span>
+    </div>
+  </div>
+
+  <div class="title-block">
+    <span class="icon">
+      <svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="#F0112D">
+        <path d="M475.8,84.2c3.9,0,7-3.1,7-7V38c0-3.9-3.1-7-7-7H36.2c-3.9,0-7,3.1-7,7v39.2c0,3.9,3.1,7,7,7h43.6v343.7H36.2c-3.9,0-7,3.1-7,7V474c0,3.9,3.1,7,7,7h439.7c3.9,0,7-3.1,7-7v-39.2c0-3.9-3.1-7-7-7h-43.6V84.2H475.8z M425.3,441.8h43.6V467H43.2v-25.2h43.6c3.9,0,7-3.1,7-7V77.2c0-3.9-3.1-7-7-7H43.2V45h425.7v25.2h-43.6c-3.9,0-7,3.1-7,7v357.7C418.3,438.7,421.4,441.8,425.3,441.8z"/>
+        <path d="M386.1,70.2H125.9c-3.9,0-7,3.1-7,7v357.7c0,3.9,3.1,7,7,7h260.2c3.9,0,7-3.1,7-7V77.2C393.1,73.3,390,70.2,386.1,70.2z M282.3,326.2h17.5v44.4h-17.5V326.2z M306.8,312.2h-31.5c-3.9,0-7,3.1-7,7v22.2h-11.7v-22.2c0-3.9-3.1-7-7-7h-31.5c-3.9,0-7,3.1-7,7v22.2h-78.2V263H151v22.2c0,3.9,3.1,7,7,7h31.5c3.9,0,7-3.1,7-7V263h11.7v22.2c0,3.9,3.1,7,7,7h31.5c3.9,0,7-3.1,7-7V263h125.4v78.4h-65.3v-22.2C313.8,315.3,310.6,312.2,306.8,312.2z M225.1,326.2h17.5v44.4h-17.5V326.2z M255.4,185.8h-17.5v-44.4h17.5V185.8z M230.9,199.8h31.5c3.9,0,7-3.1,7-7v-22.2h11.7v22.2c0,3.9,3.1,7,7,7h31.5c3.9,0,7-3.1,7-7v-22.2h52.5V249H253.7v-22.2c0-3.9-3.1-7-7-7h-31.5c-3.9,0-7,3.1-7,7V249h-11.7v-22.2c0-3.9-3.1-7-7-7H158c-3.9,0-7,3.1-7,7V249h-18.1v-78.4h91v22.2C223.9,196.7,227.1,199.8,230.9,199.8z M312.6,185.8h-17.5v-44.4h17.5V185.8z M222.2,233.8h17.5v44.4h-17.5V233.8z M165,233.8h17.5V256c0,0,0,0,0,0s0,0,0,0v22.2H165V233.8z M379.1,84.2v72.5h-52.5v-22.2c0-3.9-3.1-7-7-7h-31.5c-3.9,0-7,3.1-7,7v22.2h-11.7v-22.2c0-3.9-3.1-7-7-7h-31.5c-3.9,0-7,3.1-7,7v22.2h-91V84.2H379.1z M132.9,427.8v-72.5h78.2v22.2c0,3.9,3.1,7,7,7h31.5c3.9,0,7-3.1,7-7v-22.2h11.7v22.2c0,3.9,3.1,7,7,7h31.5c3.9,0,7-3.1,7-7v-22.2h65.3v72.5H132.9z"/>
+      </svg>
+    </span>
+    <h1>IWAA Calculator</h1>
+  </div>
+
+  <main>
+    <div id="persons"></div>
+
+    <section class="result">
+      <div class="rlabel">IWAA Result<span class="tip" onclick="toggleTip(event,this)"><span class="i">i</span><span class="pop">Income-Weighted Average Age, rounded up to the nearest year. Shows 0 if total recognised income is 0.</span></span></div>
+      <div class="rvalue" id="iwaa">0</div>
+      <div class="runit">years</div>
+    </section>
+
+    <section class="breakdown">
+      <h3>Recognised Income Breakdown</h3>
+      <table id="bdTable"></table>
+    </section>
+
+    <div class="demo-bar">
+      <button class="btn-sample" onclick="fillSample()">Fill Sample Data</button>
+      <button class="btn-reset" onclick="resetAll()">Reset</button>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Recognised Income engine — reusable for the TDSR calculator.
+   Version B: driven by selected income sources, not employment
+   status. Status is derived:
+     Salary selected            -> employed  (NOA, if selected, derives bonus)
+     NOA selected, no Salary    -> self-employed (NOA x 70% / 12)
+     neither                    -> no employment income
+   ============================================================ */
+function calcRecognisedIncome(p) {
+  let employment = 0;
+  let basicRecog = 0, bonusRecog = 0, bonusUsed = 0;
+
+  if (p.src.salary) {
+    basicRecog = p.basicSalary * 1.00;                 // Basic: 100%
+    if (p.bonusEntered) {
+      bonusUsed = p.bonusIncome;                       // manual bonus (monthly)
+    } else if (p.variableEntered) {
+      bonusUsed = p.variableMonthly;                   // variable income (monthly-ized), mutually exclusive with bonus
+    } else if (p.src.noa) {
+      bonusUsed = Math.max((p.noa - p.basicSalary * 12) / 12, 0);  // fallback: derive from NOA
+    }
+    bonusRecog = bonusUsed * 0.70;                     // Bonus / Variable: 70%
+    employment = basicRecog + bonusRecog;
+  } else if (p.src.noa) {
+    employment = (p.noa * 0.70) / 12;                  // NOA: 70%, annual -> monthly
+  }
+
+  const tenancy   = p.src.tenancy   ? p.tenancy * 0.70        : 0;  // Tenancy: 70%
+  const pledged   = p.src.pledged   ? p.pledged / 48          : 0;  // Pledged: 100% / 48 mths
+  const unpledged = p.src.unpledged ? (p.unpledged * 0.30) / 48 : 0; // Unpledged: 30% / 48 mths
+
+  return {
+    employment, basicRecog, bonusRecog, bonusUsed,
+    tenancy, pledged, unpledged,
+    total: employment + tenancy + pledged + unpledged
+  };
+}
+
+/* IWAA: weighted average age, rounded UP. Returns 0 if total income is 0. */
+function calcIWAA(persons) {
+  const totalIncome = persons.reduce((s, p) => s + p.income, 0);
+  if (totalIncome <= 0) return { value: 0, zero: true };
+  const weighted = persons.reduce((s, p) => s + p.age * p.income, 0);
+  return { value: Math.ceil(weighted / totalIncome), zero: false };
+}
+
+/* ===================== UI ===================== */
+function tip(text) {
+  return `<span class="tip" onclick="toggleTip(event,this)"><span class="i">i</span><span class="pop">${text}</span></span>`;
+}
+
+function moneyField(id, label, tipText) {
+  return `
+  <div class="field" id="wrap_${id}">
+    <div class="flabel">${label}${tipText ? tip(tipText) : ''}</div>
+    <div class="frow"><span class="prefix">S$</span>
+      <input type="number" id="${id}" min="0" placeholder="0" inputmode="decimal" oninput="recalc()">
+    </div>
+  </div>`;
+}
+
+/* Variable Income field with Monthly / Annually toggle */
+function variableField(i) {
+  return `
+  <div class="field" id="wrap_variable${i}">
+    <div class="flabel">Variable Income${tip(TIPS.variable)}
+      <span class="seg">
+        <button type="button" class="seg-btn sel" id="varseg_m${i}" onclick="setVarMode(${i},'m')">Monthly</button>
+        <button type="button" class="seg-btn" id="varseg_a${i}" onclick="setVarMode(${i},'a')">Annually</button>
+      </span>
+    </div>
+    <div class="frow"><span class="prefix">S$</span>
+      <input type="number" id="variable${i}" min="0" placeholder="0" inputmode="decimal" oninput="recalc()">
+    </div>
+  </div>`;
+}
+
+const TIPS = {
+  basic: 'Recognised at 100%.',
+  bonus: 'Recognised at 70%. Mutually exclusive with Variable Income. If both are empty and NOA is provided, bonus is derived from NOA: [NOA − (Basic × 12)] ÷ 12.',
+  variable: 'Recognised at 70%. Use the Monthly / Annually toggle (annual ÷ 12). Mutually exclusive with Bonus — enter one or the other.',
+  noaWithSalary: 'Used only to derive Bonus Income — salary portion is not double-counted.',
+  noaAlone: 'Annual income per latest NOA. Recognised at 70%, divided by 12 for monthly income.',
+  tenancy: 'Recognised at 70%. Lease must have at least 6 months remaining.',
+  pledged: 'Pledged for 48 months. Recognised at 100%, spread over 48 months.',
+  unpledged: 'Recognised at 30%, spread over 48 months. Verified at loan application and disbursement.',
+};
+
+const SOURCES = [
+  { key: 'salary',    label: 'Salary' },
+  { key: 'noa',       label: 'NOA' },
+  { key: 'tenancy',   label: 'Tenancy' },
+  { key: 'pledged',   label: 'Pledged CFD' },
+  { key: 'unpledged', label: 'Unpledged CFD' },
+];
+
+function personSection(i, hidden) {
+  return `
+  <section class="person ${hidden ? 'hidden' : ''}" id="card${i}">
+    <div class="owner-bar" onclick="toggleCard(${i})">
+      <span class="name">Person ${i} (P${i})</span>
+      <span class="sub-mini" id="barSub${i}"></span>
+      ${i === 3 ? '<button class="remove" onclick="removeP3(event)" title="Remove Person 3">&#215;</button>' : ''}
+      <span class="chev">&#9650;</span>
+    </div>
+    <div class="person-body" id="body${i}">
+
+      <div class="field age-field">
+        <div class="flabel">Age</div>
+        <div class="frow">
+          <button class="stepbtn" onclick="stepAge(${i},-1)">&#8722;</button>
+          <input type="number" id="age${i}" min="18" max="99" value="30" oninput="recalc()">
+          <button class="stepbtn" onclick="stepAge(${i},1)">+</button>
+        </div>
+      </div>
+
+      <div class="chips-label">Income Sources — select all that apply</div>
+      <div class="chips" id="chips${i}">
+        ${SOURCES.map(s => `
+          <button class="chip" id="chip_${s.key}${i}" onclick="toggleSrc(${i},'${s.key}',this)">
+            <span class="tick">&#10003;</span>${s.label}
+          </button>`).join('')}
+      </div>
+
+      ${moneyField('basic'+i, 'Basic Salary (monthly)', TIPS.basic)}
+      ${moneyField('bonus'+i, 'Bonus Income (monthly)', TIPS.bonus)}
+      ${variableField(i)}
+      ${moneyField('noa'+i, 'Latest NOA (annual)', TIPS.noaAlone)}
+      ${moneyField('tenancy'+i, 'Tenancy Income (monthly)', TIPS.tenancy)}
+      ${moneyField('pledged'+i, 'Cash / FD — Pledged', TIPS.pledged)}
+      ${moneyField('unpledged'+i, 'Cash / FD — Unpledged', TIPS.unpledged)}
+    </div>
+  </section>`;
+}
+
+/* Selected income sources per person */
+const src = {
+  1: { salary: false, noa: false, tenancy: false, pledged: false, unpledged: false },
+  2: { salary: false, noa: false, tenancy: false, pledged: false, unpledged: false },
+  3: { salary: false, noa: false, tenancy: false, pledged: false, unpledged: false },
+};
+
+/* Variable Income mode per person: 'm' = monthly, 'a' = annually */
+const varMode = { 1: 'm', 2: 'm', 3: 'm' };
+function applyVarMode(i) {
+  document.getElementById('varseg_m' + i).classList.toggle('sel', varMode[i] === 'm');
+  document.getElementById('varseg_a' + i).classList.toggle('sel', varMode[i] === 'a');
+}
+function setVarMode(i, mode) { varMode[i] = mode; applyVarMode(i); recalc(); }
+function setFieldDisabled(wrapId, inputId, disabled) {
+  document.getElementById(wrapId).classList.toggle('disabled', disabled);
+  document.getElementById(inputId).disabled = disabled;
+}
+
+document.getElementById('persons').innerHTML =
+  personSection(1, false) +
+  personSection(2, false) +
+  `<button class="add-person" id="addP3" onclick="addP3()">
+    <span class="plus">+</span> Add Person 3
+  </button>` +
+  personSection(3, true);
+
+function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function fmt(n) { return 'S$ ' + n.toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmt0(n) { return 'S$' + n.toLocaleString('en-SG', { maximumFractionDigits: 0 }); }
+
+function toggleTip(e, el) {
+  e.stopPropagation();
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.tip.open').forEach(t => t.classList.remove('open'));
+  if (!wasOpen) el.classList.add('open');
+}
+document.addEventListener('click', () => {
+  document.querySelectorAll('.tip.open').forEach(t => t.classList.remove('open'));
+});
+
+function stepAge(i, d) {
+  const el = document.getElementById('age' + i);
+  let v = (parseInt(el.value) || 30) + d;
+  v = Math.min(99, Math.max(18, v));
+  el.value = v;
+  recalc();
+}
+
+function toggleSrc(i, key, btn) {
+  src[i][key] = !src[i][key];
+  btn.classList.toggle('sel', src[i][key]);
+  recalc();
+}
+
+function readPerson(i) {
+  const bonusRaw = document.getElementById('bonus' + i).value;
+  const variableRaw = document.getElementById('variable' + i).value;
+  const variableValue = num('variable' + i);
+  const variableMonthly = varMode[i] === 'a' ? variableValue / 12 : variableValue;
+  return {
+    age: num('age' + i),
+    src: src[i],
+    basicSalary: num('basic' + i),
+    bonusIncome: num('bonus' + i),
+    bonusEntered: bonusRaw.trim() !== '' && parseFloat(bonusRaw) > 0,
+    variableMonthly,
+    variableEntered: variableRaw.trim() !== '' && parseFloat(variableRaw) > 0,
+    noa: num('noa' + i),
+    tenancy: num('tenancy' + i),
+    pledged: num('pledged' + i),
+    unpledged: num('unpledged' + i),
+  };
+}
+
+let p3Active = false;
+function activePersonIds() { return p3Active ? [1, 2, 3] : [1, 2]; }
+
+function recalc() {
+  const ids = activePersonIds();
+  const rows = [];
+  const forIWAA = [];
+
+  for (const i of [1, 2, 3]) {
+    const raw = readPerson(i);
+    const s = src[i];
+
+    // Field visibility follows selected sources
+    document.getElementById('wrap_basic' + i).classList.toggle('hidden', !s.salary);
+    document.getElementById('wrap_bonus' + i).classList.toggle('hidden', !s.salary);
+    document.getElementById('wrap_variable' + i).classList.toggle('hidden', !s.salary);
+    document.getElementById('wrap_noa' + i).classList.toggle('hidden', !s.noa);
+
+    // Bonus <-> Variable Income are mutually exclusive: whichever is filled greys out the other
+    const bonusHasVal = parseFloat(document.getElementById('bonus' + i).value) > 0;
+    const varHasVal = parseFloat(document.getElementById('variable' + i).value) > 0;
+    const disableVar = bonusHasVal;                 // bonus filled -> grey Variable Income
+    const disableBonus = varHasVal && !bonusHasVal; // variable filled (bonus empty) -> grey Bonus
+    setFieldDisabled('wrap_bonus' + i, 'bonus' + i, disableBonus);
+    setFieldDisabled('wrap_variable' + i, 'variable' + i, disableVar);
+    document.getElementById('varseg_m' + i).disabled = disableVar;
+    document.getElementById('varseg_a' + i).disabled = disableVar;
+    document.getElementById('wrap_tenancy' + i).classList.toggle('hidden', !s.tenancy);
+    document.getElementById('wrap_pledged' + i).classList.toggle('hidden', !s.pledged);
+    document.getElementById('wrap_unpledged' + i).classList.toggle('hidden', !s.unpledged);
+
+    // NOA tooltip adapts: with Salary it only derives bonus, alone it is the income
+    const noaPop = document.querySelector('#wrap_noa' + i + ' .pop');
+    if (noaPop) noaPop.textContent = s.salary ? TIPS.noaWithSalary : TIPS.noaAlone;
+
+    if (!ids.includes(i)) continue;
+
+    const r = calcRecognisedIncome(raw);
+    document.getElementById('barSub' + i).textContent = fmt0(r.total) + '/mo';
+    rows.push({ i, raw, r });
+    forIWAA.push({ age: raw.age, income: r.total });
+  }
+
+  const iwaa = calcIWAA(forIWAA);
+  document.getElementById('iwaa').textContent = iwaa.value;
+
+  // Breakdown table
+  let html = `<tr><th>Component</th>${rows.map(x => `<th>P${x.i}</th>`).join('')}</tr>`;
+  const lines = [
+    ['Employment Income', x => x.r.employment],
+    ['Tenancy (70%)', x => x.r.tenancy],
+    ['Pledged CFD (÷48)', x => x.r.pledged],
+    ['Unpledged CFD (30%÷48)', x => x.r.unpledged],
+  ];
+  for (const [name, fn] of lines) {
+    html += `<tr><td>${name}</td>${rows.map(x => `<td>${fmt(fn(x))}</td>`).join('')}</tr>`;
+  }
+  html += `<tr class="total"><td>Recognised Income (Monthly)</td>${rows.map(x => `<td>${fmt(x.r.total)}</td>`).join('')}</tr>`;
+  html += `<tr><td>Age</td>${rows.map(x => `<td>${x.raw.age}</td>`).join('')}</tr>`;
+  document.getElementById('bdTable').innerHTML = html;
+}
+
+function toggleCard(i) {
+  document.getElementById('card' + i).classList.toggle('collapsed');
+}
+function addP3() {
+  p3Active = true;
+  document.getElementById('card3').classList.remove('hidden');
+  document.getElementById('addP3').classList.add('hidden');
+  recalc();
+}
+function removeP3(e) {
+  if (e) e.stopPropagation();
+  p3Active = false;
+  document.getElementById('card3').classList.add('hidden');
+  document.getElementById('addP3').classList.remove('hidden');
+  recalc();
+}
+
+function fillSample() {
+  setVals(1, { age: 35, srcs: ['salary','noa','tenancy'], basic: 6000, bonus: '', noa: 90000, tenancy: 2000, pledged: '', unpledged: '' });
+  setVals(2, { age: 42, srcs: ['noa','pledged'], basic: '', bonus: '', noa: 120000, tenancy: '', pledged: 100000, unpledged: '' });
+  recalc();
+}
+function setVals(i, v) {
+  document.getElementById('age' + i).value = v.age;
+  for (const s of SOURCES) {
+    src[i][s.key] = v.srcs.includes(s.key);
+    document.getElementById('chip_' + s.key + i).classList.toggle('sel', src[i][s.key]);
+  }
+  document.getElementById('basic' + i).value = v.basic;
+  document.getElementById('bonus' + i).value = v.bonus;
+  document.getElementById('variable' + i).value = v.variable || '';
+  varMode[i] = 'm'; applyVarMode(i);
+  document.getElementById('noa' + i).value = v.noa;
+  document.getElementById('tenancy' + i).value = v.tenancy;
+  document.getElementById('pledged' + i).value = v.pledged;
+  document.getElementById('unpledged' + i).value = v.unpledged;
+}
+function resetAll() {
+  for (const i of [1, 2, 3]) {
+    setVals(i, { age: 30, srcs: [], basic: '', bonus: '', noa: '', tenancy: '', pledged: '', unpledged: '' });
+  }
+  removeP3(null);
+}
+
+function tick() {
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+tick(); setInterval(tick, 15000);
+
+recalc();
+</script>
+</body>
+</html>
