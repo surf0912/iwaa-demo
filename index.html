@@ -285,9 +285,11 @@
 <script>
 /* ============================================================
    Recognised Income engine — reusable for the TDSR calculator.
-   Version B: driven by selected income sources, not employment
+   Version C: driven by selected income sources, not employment
    status. Status is derived:
-     Salary selected            -> employed  (NOA, if selected, derives bonus)
+     Salary selected            -> employed. Variable income (70%) OR
+                                   NOA (derives variable) — the two are
+                                   mutually exclusive, never both.
      NOA selected, no Salary    -> self-employed (NOA x 70% / 12)
      neither                    -> no employment income
    ============================================================ */
@@ -297,14 +299,12 @@ function calcRecognisedIncome(p) {
 
   if (p.src.salary) {
     basicRecog = p.basicSalary * 1.00;                 // Basic: 100%
-    if (p.bonusEntered) {
-      bonusUsed = p.bonusIncome;                       // manual bonus (monthly)
-    } else if (p.variableEntered) {
-      bonusUsed = p.variableMonthly;                   // variable income (monthly-ized), mutually exclusive with bonus
+    if (p.variableEntered) {
+      bonusUsed = p.variableMonthly;                   // Path 1: Basic + Variable (monthly-ized)
     } else if (p.src.noa) {
-      bonusUsed = Math.max((p.noa - p.basicSalary * 12) / 12, 0);  // fallback: derive from NOA
+      bonusUsed = Math.max((p.noa - p.basicSalary * 12) / 12, 0);  // Path 2: derive variable from NOA
     }
-    bonusRecog = bonusUsed * 0.70;                     // Bonus / Variable: 70%
+    bonusRecog = bonusUsed * 0.70;                     // Variable: 70%
     employment = basicRecog + bonusRecog;
   } else if (p.src.noa) {
     employment = (p.noa * 0.70) / 12;                  // NOA: 70%, annual -> monthly
@@ -362,9 +362,8 @@ function variableField(i) {
 
 const TIPS = {
   basic: 'Recognised at 100%.',
-  bonus: 'Recognised at 70%. Mutually exclusive with Variable Income. If both are empty and NOA is provided, bonus is derived from NOA: [NOA − (Basic × 12)] ÷ 12.',
-  variable: 'Recognised at 70%. Use the Monthly / Annually toggle (annual ÷ 12). Mutually exclusive with Bonus — enter one or the other.',
-  noaWithSalary: 'Used only to derive Bonus Income — salary portion is not double-counted.',
+  variable: 'Bonus / variable income recognised at 70%. Use the Monthly / Annually toggle (annual ÷ 12). Mutually exclusive with NOA — enter one or the other.',
+  noaWithSalary: 'Used to derive your variable income: [NOA − (Basic × 12)] ÷ 12, recognised at 70%. Mutually exclusive with Variable Income.',
   noaAlone: 'Annual income per latest NOA. Recognised at 70%, divided by 12 for monthly income.',
   tenancy: 'Recognised at 70%. Lease must have at least 6 months remaining.',
   pledged: 'Pledged for 48 months. Recognised at 100%, spread over 48 months.',
@@ -375,8 +374,8 @@ const SOURCES = [
   { key: 'salary',    label: 'Salary' },
   { key: 'noa',       label: 'NOA' },
   { key: 'tenancy',   label: 'Tenancy' },
-  { key: 'pledged',   label: 'Pledged CFD' },
-  { key: 'unpledged', label: 'Unpledged CFD' },
+  { key: 'pledged',   label: 'Pledged EFA' },
+  { key: 'unpledged', label: 'Unpledged EFA' },
 ];
 
 function personSection(i, hidden) {
@@ -408,12 +407,11 @@ function personSection(i, hidden) {
       </div>
 
       ${moneyField('basic'+i, 'Basic Salary (monthly)', TIPS.basic)}
-      ${moneyField('bonus'+i, 'Bonus Income (monthly)', TIPS.bonus)}
       ${variableField(i)}
       ${moneyField('noa'+i, 'Latest NOA (annual)', TIPS.noaAlone)}
       ${moneyField('tenancy'+i, 'Tenancy Income (monthly)', TIPS.tenancy)}
-      ${moneyField('pledged'+i, 'Cash / FD — Pledged', TIPS.pledged)}
-      ${moneyField('unpledged'+i, 'Cash / FD — Unpledged', TIPS.unpledged)}
+      ${moneyField('pledged'+i, 'EFA — Pledged', TIPS.pledged)}
+      ${moneyField('unpledged'+i, 'EFA — Unpledged', TIPS.unpledged)}
     </div>
   </section>`;
 }
@@ -474,7 +472,6 @@ function toggleSrc(i, key, btn) {
 }
 
 function readPerson(i) {
-  const bonusRaw = document.getElementById('bonus' + i).value;
   const variableRaw = document.getElementById('variable' + i).value;
   const variableValue = num('variable' + i);
   const variableMonthly = varMode[i] === 'a' ? variableValue / 12 : variableValue;
@@ -482,8 +479,6 @@ function readPerson(i) {
     age: num('age' + i),
     src: src[i],
     basicSalary: num('basic' + i),
-    bonusIncome: num('bonus' + i),
-    bonusEntered: bonusRaw.trim() !== '' && parseFloat(bonusRaw) > 0,
     variableMonthly,
     variableEntered: variableRaw.trim() !== '' && parseFloat(variableRaw) > 0,
     noa: num('noa' + i),
@@ -507,24 +502,25 @@ function recalc() {
 
     // Field visibility follows selected sources
     document.getElementById('wrap_basic' + i).classList.toggle('hidden', !s.salary);
-    document.getElementById('wrap_bonus' + i).classList.toggle('hidden', !s.salary);
     document.getElementById('wrap_variable' + i).classList.toggle('hidden', !s.salary);
     document.getElementById('wrap_noa' + i).classList.toggle('hidden', !s.noa);
 
-    // Bonus <-> Variable Income are mutually exclusive: whichever is filled greys out the other
-    const bonusHasVal = parseFloat(document.getElementById('bonus' + i).value) > 0;
+    // Variable Income <-> NOA are mutually exclusive when Salary is selected:
+    // Basic + Variable  (grey out NOA)   OR   Basic + NOA  (grey out Variable).
     const varHasVal = parseFloat(document.getElementById('variable' + i).value) > 0;
-    const disableVar = bonusHasVal;                 // bonus filled -> grey Variable Income
-    const disableBonus = varHasVal && !bonusHasVal; // variable filled (bonus empty) -> grey Bonus
-    setFieldDisabled('wrap_bonus' + i, 'bonus' + i, disableBonus);
+    const noaHasVal = parseFloat(document.getElementById('noa' + i).value) > 0;
+    const disableNoa = s.salary && varHasVal;              // variable filled -> grey NOA
+    const disableVar = noaHasVal && !varHasVal;            // NOA filled (variable empty) -> grey Variable
     setFieldDisabled('wrap_variable' + i, 'variable' + i, disableVar);
     document.getElementById('varseg_m' + i).disabled = disableVar;
     document.getElementById('varseg_a' + i).disabled = disableVar;
+    if (s.salary) setFieldDisabled('wrap_noa' + i, 'noa' + i, disableNoa);
+    else setFieldDisabled('wrap_noa' + i, 'noa' + i, false);  // NOA alone: never greyed
     document.getElementById('wrap_tenancy' + i).classList.toggle('hidden', !s.tenancy);
     document.getElementById('wrap_pledged' + i).classList.toggle('hidden', !s.pledged);
     document.getElementById('wrap_unpledged' + i).classList.toggle('hidden', !s.unpledged);
 
-    // NOA tooltip adapts: with Salary it only derives bonus, alone it is the income
+    // NOA tooltip adapts: with Salary it derives variable income, alone it is the income
     const noaPop = document.querySelector('#wrap_noa' + i + ' .pop');
     if (noaPop) noaPop.textContent = s.salary ? TIPS.noaWithSalary : TIPS.noaAlone;
 
@@ -544,8 +540,8 @@ function recalc() {
   const lines = [
     ['Employment Income', x => x.r.employment],
     ['Tenancy (70%)', x => x.r.tenancy],
-    ['Pledged CFD (÷48)', x => x.r.pledged],
-    ['Unpledged CFD (30%÷48)', x => x.r.unpledged],
+    ['Pledged EFA (÷48)', x => x.r.pledged],
+    ['Unpledged EFA (30%÷48)', x => x.r.unpledged],
   ];
   for (const [name, fn] of lines) {
     html += `<tr><td>${name}</td>${rows.map(x => `<td>${fmt(fn(x))}</td>`).join('')}</tr>`;
@@ -573,8 +569,10 @@ function removeP3(e) {
 }
 
 function fillSample() {
-  setVals(1, { age: 35, srcs: ['salary','noa','tenancy'], basic: 6000, bonus: '', noa: 90000, tenancy: 2000, pledged: '', unpledged: '' });
-  setVals(2, { age: 42, srcs: ['noa','pledged'], basic: '', bonus: '', noa: 120000, tenancy: '', pledged: 100000, unpledged: '' });
+  // P1: Basic + Variable (NOA greys out) + Tenancy
+  setVals(1, { age: 35, srcs: ['salary','tenancy'], basic: 6000, variable: 2000, noa: '', tenancy: 2000, pledged: '', unpledged: '' });
+  // P2: NOA alone (self-employed) + Pledged EFA
+  setVals(2, { age: 42, srcs: ['noa','pledged'], basic: '', variable: '', noa: 120000, tenancy: '', pledged: 100000, unpledged: '' });
   recalc();
 }
 function setVals(i, v) {
@@ -584,7 +582,6 @@ function setVals(i, v) {
     document.getElementById('chip_' + s.key + i).classList.toggle('sel', src[i][s.key]);
   }
   document.getElementById('basic' + i).value = v.basic;
-  document.getElementById('bonus' + i).value = v.bonus;
   document.getElementById('variable' + i).value = v.variable || '';
   varMode[i] = 'm'; applyVarMode(i);
   document.getElementById('noa' + i).value = v.noa;
@@ -594,7 +591,7 @@ function setVals(i, v) {
 }
 function resetAll() {
   for (const i of [1, 2, 3]) {
-    setVals(i, { age: 30, srcs: [], basic: '', bonus: '', noa: '', tenancy: '', pledged: '', unpledged: '' });
+    setVals(i, { age: 30, srcs: [], basic: '', variable: '', noa: '', tenancy: '', pledged: '', unpledged: '' });
   }
   removeP3(null);
 }
