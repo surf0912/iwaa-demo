@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDSR / MSR Calculator — Demo</title>
+<style>
+  :root{
+    --red:#F0112D; --red-dark:#C90D24; --ink:#1C1C1E; --gray:#8A8A8E;
+    --field:#EFEFF1; --underline:#2C2C2E; --white:#fff; --bg:#D9DADE; --line:#E6E6EA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;justify-content:center;padding:16px 0;min-height:100vh;}
+  .phone{width:100%;max-width:440px;background:var(--white);border-radius:40px;overflow:hidden;box-shadow:0 12px 50px rgba(0,0,0,.28);display:flex;flex-direction:column;}
+  .appbar{background:var(--red);color:#fff;padding:18px 20px 20px;}
+  .appbar .top{display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-bottom:14px;}
+  .appbar h1{font-size:20px;font-weight:800;}
+  .appbar .sub{font-size:12px;opacity:.9;margin-top:3px;}
+  main{background:#FAFAFB;padding:14px 16px 28px;}
+  .card{background:#fff;border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px;margin-bottom:14px;}
+  .sec-title{font-size:12px;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin:0 0 10px;}
+  .seg{display:flex;background:#fff;border-radius:9px;padding:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);gap:3px;}
+  .seg button{flex:1;border:none;background:transparent;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--gray);padding:8px 4px;border-radius:7px;cursor:pointer;}
+  .seg button.sel{background:var(--red);color:#fff;}
+  .seg button:disabled{opacity:.35;cursor:not-allowed;}
+  .ptype{display:flex;flex-wrap:wrap;gap:8px;}
+  .ptype button{border:none;cursor:pointer;background:var(--field);color:var(--ink);font-size:13px;font-weight:700;padding:10px 12px;border-radius:9px;font-family:inherit;flex:1 1 28%;}
+  .ptype button.sel{background:var(--red);color:#fff;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 6px;}
+  .chip{border:none;cursor:pointer;background:var(--field);color:var(--ink);font-size:12.5px;font-weight:600;padding:9px 11px;border-radius:10px;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}
+  .chip.sel{background:var(--red);color:#fff;}
+  .chip .tk{display:none;}.chip.sel .tk{display:inline;}
+  .chips-label{font-size:11.5px;color:var(--gray);margin:8px 2px 6px;font-weight:600;}
+  .field{background:var(--field);border-radius:9px 9px 0 0;border-bottom:2px solid var(--underline);padding:8px 12px 7px;margin-bottom:10px;}
+  .field.disabled{opacity:.45;}
+  .field .fl{font-size:12px;color:var(--gray);margin-bottom:2px;display:flex;align-items:center;justify-content:space-between;}
+  .field .fr{display:flex;align-items:baseline;gap:6px;}
+  .field .px{font-size:14px;color:var(--ink);}
+  .field input{flex:1;border:none;background:transparent;font-size:16px;font-weight:600;color:var(--ink);text-align:right;width:100%;font-family:inherit;}
+  .field input:focus{outline:none;}
+  .field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .miniseg{display:inline-flex;background:#fff;border-radius:7px;padding:2px;box-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .miniseg button{border:none;background:transparent;font-family:inherit;font-size:10.5px;font-weight:700;color:var(--gray);padding:3px 8px;border-radius:5px;cursor:pointer;}
+  .miniseg button.sel{background:var(--red);color:#fff;}
+  .ownerbar{background:var(--red);color:#fff;border-radius:11px;padding:9px 13px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:10px;}
+  .ownerbar .sub{font-size:11.5px;font-weight:600;opacity:.95;margin-left:auto;}
+  .ownerbar .rm{background:rgba(255,255,255,.25);border:none;color:#fff;width:22px;height:22px;border-radius:50%;font-size:14px;cursor:pointer;font-family:inherit;line-height:1;}
+  .age{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .age .lbl{font-size:12px;color:var(--gray);font-weight:600;}
+  .age input{width:54px;text-align:center;font-size:17px;font-weight:700;border:none;background:var(--field);border-radius:8px;padding:6px 0;font-family:inherit;}
+  .step{width:28px;height:28px;border-radius:50%;border:none;background:#fff;color:var(--red);font-size:17px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:pointer;font-family:inherit;}
+  .add{width:100%;background:#fff;border:2px dashed #E3A6AE;color:var(--red);border-radius:12px;padding:11px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin:2px 0 14px;}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+  .res .big{font-size:13px;color:var(--gray);}
+  .res table{width:100%;border-collapse:collapse;font-size:13px;}
+  .res td{padding:6px 2px;}
+  .res td:last-child{text-align:right;font-weight:700;}
+  .res tr.tot td{border-top:1.5px solid var(--ink);font-weight:800;color:var(--red);padding-top:9px;}
+  .res tr.sub td{color:var(--gray);font-size:12px;}
+  .res .hl{font-size:30px;font-weight:800;color:var(--red);text-align:center;letter-spacing:-.5px;}
+  .res .hl small{font-size:13px;font-weight:700;}
+  .note{font-size:11px;color:var(--gray);margin-top:8px;line-height:1.5;}
+  .pill{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;background:#FDE3E7;color:var(--red);margin-left:6px;}
+  .btnrow{display:flex;gap:10px;margin-top:6px;}
+  .btnrow button{flex:1;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;}
+  .btn-s{background:var(--red);color:#fff;}.btn-r{background:#fff;color:var(--red);border:2px solid var(--red);}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="appbar">
+    <div class="top"><span id="clock">9:41</span><span>Demo</span></div>
+    <h1>TDSR / MSR Calculator</h1>
+    <div class="sub">Buffet-style demo · shared IWAA income engine</div>
+  </div>
+  <main>
+    <div class="card">
+      <div class="sec-title">Transaction Type</div>
+      <div class="seg" id="txseg">
+        <button data-tx="purchase" class="sel">Purchase</button>
+        <button data-tx="refinance">Refinance</button>
+        <button data-tx="cashout">Cash-Out</button>
+      </div>
+      <div class="note" id="txnote"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">Property Type</div>
+      <div class="ptype" id="ptype">
+        <button data-pt="private" class="sel">Private</button>
+        <button data-pt="hdb">HDB</button>
+        <button data-pt="ec">EC</button>
+        <button data-pt="commercial">Commercial</button>
+        <button data-pt="industrial">Industrial</button>
+      </div>
+      <div class="note" id="ptnote"></div>
+    </div>
+
+    <div id="owners"></div>
+    <button class="add" id="addBtn" onclick="addOwner()">+ Add Person 3</button>
+
+    <div class="card">
+      <div class="sec-title">Loan Details</div>
+      <div class="field" id="wrap_price">
+        <div class="fl">Property Price (Purchase Price)</div>
+        <div class="fr"><span class="px">S$</span><input id="price" type="number" inputmode="decimal" placeholder="0" oninput="onInput()"></div>
+      </div>
+      <div class="row2">
+        <div class="field" id="wrap_ltv">
+          <div class="fl">Loan-to-Value <span id="ltvcap" style="font-size:10px;"></span></div>
+          <div class="fr"><input id="ltv" type="number" inputmode="decimal" placeholder="—" oninput="onLtvInput()" style="text-align:left;"><span class="px">%</span></div>
+        </div>
+        <div class="field" id="wrap_tenure">
+          <div class="fl">Tenure (yrs) <span id="tencap" style="font-size:10px;"></span></div>
+          <div class="fr"><input id="tenure" type="number" inputmode="decimal" placeholder="—" oninput="onInput()" style="text-align:left;"></div>
+        </div>
+      </div>
+      <div class="field" id="wrap_stress">
+        <div class="fl">Stress-Test Rate</div>
+        <div class="fr"><input id="stress" type="number" inputmode="decimal" placeholder="—" oninput="onInput()" style="text-align:left;"><span class="px">%</span></div>
+      </div>
+    </div>
+
+    <div class="card res">
+      <div class="sec-title">IWAA</div>
+      <div class="hl" id="iwaa">0<small> yrs</small></div>
+      <div class="sec-title" style="margin-top:14px;">Result</div>
+      <table id="restable"></table>
+      <div class="note" id="resnote"></div>
+    </div>
+
+    <div class="btnrow">
+      <button class="btn-s" onclick="fillSample()">Fill Sample</button>
+      <button class="btn-r" onclick="resetAll()">Reset</button>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============ MODEL ============ */
+const INC_SRC = [
+  {k:'salary',l:'Salary'},{k:'noa',l:'NOA'},{k:'tenancy',l:'Tenancy'},
+  {k:'pledged',l:'Pledged EFA'},{k:'unpledged',l:'Unpledged EFA'}
+];
+const LIAB_SRC = [
+  {k:'car',l:'Car Loan'},{k:'personal',l:'Personal Loan'},{k:'guarantor',l:'Guarantor'},
+  {k:'card',l:'Credit Card'},{k:'overdraft',l:'Overdraft'}
+];
+function newOwner(age){return{
+  age:age, inc:{salary:false,noa:false,tenancy:false,pledged:false,unpledged:false},
+  basic:'',variable:'',varMode:'m',noa:'',tenancy:'',pledged:'',unpledged:'',
+  liab:{car:false,personal:false,guarantor:false,card:false,overdraft:false},
+  car:'',personal:'',guarantor:'',card:'',overdraft:'', existingLoans:0
+};}
+let owners=[newOwner(35),newOwner(40)];
+let tx='purchase';        // purchase | refinance | cashout
+let pt='private';         // private hdb ec commercial industrial
+let price='', tenure='', stress='', ltvIntended='';   // ltvIntended = what the user typed (their intent)
+
+/* ============ RULES ============ */
+const isResidential = t => (t==='private'||t==='hdb'||t==='ec');
+const isMSR = t => (t==='hdb'||t==='ec');
+const stdTenureCap = t => (t==='hdb'?25:30);          // HDB 25, EC/PTE 30
+const extTenureCap = t => (t==='hdb'?30:35);          // HDB 30, EC/PTE 35
+function defaultStress(t){ return isResidential(t)?'3.5':''; } // commercial/industrial blank
+function defaultLtv(t){ return isResidential(t)?'75':''; }
+
+/* recognised monthly income — the SHARED engine (same as IWAA calc) */
+function recognised(o){
+  const num = v => parseFloat(v)||0;
+  let emp=0;
+  const basic=num(o.basic);
+  if(o.inc.salary){
+    let used=0;
+    const varEntered = o.variable!=='' && num(o.variable)>0;
+    const varMonthly = o.varMode==='a' ? num(o.variable)/12 : num(o.variable);
+    if(varEntered) used=varMonthly;
+    else if(o.inc.noa) used=Math.max((num(o.noa)-basic*12)/12,0);
+    emp=basic + used*0.70;
+  } else if(o.inc.noa){
+    emp=(num(o.noa)*0.70)/12;
+  }
+  const ten = o.inc.tenancy ? num(o.tenancy)*0.70 : 0;
+  const pl  = o.inc.pledged ? num(o.pledged)/48 : 0;
+  const un  = o.inc.unpledged ? num(o.unpledged)*0.30/48 : 0;
+  return {emp,ten,pl,un,total:emp+ten+pl+un};
+}
+function ownerDebt(o){
+  const num=v=>parseFloat(v)||0;
+  let d=0;
+  if(o.liab.car) d+=num(o.car);
+  if(o.liab.personal) d+=num(o.personal);
+  if(o.liab.guarantor) d+=num(o.guarantor);
+  if(o.liab.card){ const c=num(o.card); d += (c===0?50:c*0.03); } // 3% min payment, $0 limit -> $50
+  if(o.liab.overdraft) d+=num(o.overdraft);
+  return d;
+}
+/* LTV cap matrix: existing loans x bracket */
+function ltvCapFor(loanCount, extended){
+  const base = extended ? [55,25,15] : [75,45,35];
+  return base[Math.min(loanCount,2)];
+}
+function minCashFrac(t, loanCount, extended){
+  if(!isResidential(t)) return 1;            // commercial/industrial 100% cash
+  if(loanCount===0) return extended?0.10:0.05;
+  return 0.25;
+}
+/* effective LTV cap given current tx/pt/tenure/existingLoans (residential only) */
+function residentialLtvCap(){
+  const maxExisting = Math.max(...owners.map(o=>o.existingLoans), 0);
+  const ten = parseFloat(tenure)||0;
+  let extended = ten > stdTenureCap(pt);
+  if(tx==='refinance' || tx==='cashout') extended=false; // refi/cashout keep purchase-level LTV
+  return {cap:ltvCapFor(maxExisting,extended), extended, maxExisting};
+}
+
+/* ============ RENDER ============ */
+function field(id,label,extra=''){return `
+  <div class="field" id="wrap_${id}">
+    <div class="fl">${label}${extra}</div>
+    <div class="fr"><span class="px">S$</span><input id="${id}" type="number" inputmode="decimal" placeholder="0" oninput="onInput()"></div>
+  </div>`;}
+
+function renderOwners(){
+  const host=document.getElementById('owners');
+  host.innerHTML = owners.map((o,i)=>{
+    const r=recognised(o);
+    const incChips = INC_SRC.map(s=>`<button class="chip ${o.inc[s.k]?'sel':''}" onclick="toggleInc(${i},'${s.k}')"><span class="tk">&#10003;</span>${s.l}</button>`).join('');
+    const liabChips = LIAB_SRC.map(s=>`<button class="chip ${o.liab[s.k]?'sel':''}" onclick="toggleLiab(${i},'${s.k}')"><span class="tk">&#10003;</span>${s.l}</button>`).join('');
+    // income fields
+    let f='';
+    if(o.inc.salary){
+      f+=field('basic'+i,'Basic Salary (monthly)');
+      const varDis = o.inc.noa && (o.noa!=='' && (parseFloat(o.noa)||0)>0) && !(o.variable!==''&&(parseFloat(o.variable)||0)>0);
+      f+=`<div class="field ${varDis?'disabled':''}" id="wrap_variable${i}">
+        <div class="fl">Variable Income
+          <span class="miniseg"><button class="${o.varMode==='m'?'sel':''}" onclick="setVarMode(${i},'m')">Monthly</button><button class="${o.varMode==='a'?'sel':''}" onclick="setVarMode(${i},'a')">Annually</button></span>
+        </div>
+        <div class="fr"><span class="px">S$</span><input id="variable${i}" type="number" inputmode="decimal" placeholder="0" oninput="onInput()" ${varDis?'disabled':''}></div></div>`;
+    }
+    if(o.inc.noa){
+      const noaDis = o.inc.salary && (o.variable!=='' && (parseFloat(o.variable)||0)>0);
+      f+=`<div class="field ${noaDis?'disabled':''}" id="wrap_noa${i}"><div class="fl">Latest NOA (annual)${o.inc.salary?' — derives variable':''}</div><div class="fr"><span class="px">S$</span><input id="noa${i}" type="number" inputmode="decimal" placeholder="0" oninput="onInput()" ${noaDis?'disabled':''}></div></div>`;
+    }
+    if(o.inc.tenancy) f+=field('tenancy'+i,'Tenancy Income (monthly)');
+    if(o.inc.pledged) f+=field('pledged'+i,'Pledged EFA');
+    if(o.inc.unpledged) f+=field('unpledged'+i,'Unpledged EFA');
+    // liability fields
+    let lf='';
+    if(o.liab.car) lf+=field('car'+i,'Car Loan (monthly)');
+    if(o.liab.personal) lf+=field('personal'+i,'Personal Loan (monthly)');
+    if(o.liab.guarantor) lf+=field('guarantor'+i,'Guarantor Servicing (monthly)');
+    if(o.liab.card) lf+=field('card'+i,'Credit Card outstanding');
+    if(o.liab.overdraft) lf+=field('overdraft'+i,'Unsecured Overdraft');
+    return `<div class="card">
+      <div class="ownerbar"><span>Person ${i+1}</span><span class="sub">recog S$${Math.round(r.total).toLocaleString()}/mo</span>${i===2?`<button class="rm" onclick="rmOwner()">&#215;</button>`:''}</div>
+      <div class="age"><span class="lbl">Age</span><button class="step" onclick="stepAge(${i},-1)">&minus;</button><input type="number" value="${o.age}" oninput="setAge(${i},this.value)"><button class="step" onclick="stepAge(${i},1)">+</button>
+        <span class="lbl" style="margin-left:auto;">Existing housing loans</span>
+        <select onchange="setExisting(${i},this.value)" style="font-family:inherit;font-size:13px;padding:5px;border-radius:7px;">
+          <option ${o.existingLoans==0?'selected':''}>0</option><option ${o.existingLoans==1?'selected':''}>1</option><option ${o.existingLoans==2?'selected':''}>2</option></select>
+      </div>
+      <div class="chips-label">Income Sources — select all that apply</div>
+      <div class="chips">${incChips}</div>${f}
+      <div class="chips-label">Loans / Liabilities — select all that apply</div>
+      <div class="chips">${liabChips}</div>${lf}
+    </div>`;
+  }).join('');
+  restoreFieldValues();
+  document.getElementById('addBtn').classList.toggle('hidden', owners.length>=3);
+}
+function restoreFieldValues(){
+  owners.forEach((o,i)=>{
+    ['basic','variable','noa','tenancy','pledged','unpledged','car','personal','guarantor','card','overdraft'].forEach(k=>{
+      const el=document.getElementById(k+i); if(el) el.value=o[k];
+    });
+  });
+}
+function readFieldValues(){
+  owners.forEach((o,i)=>{
+    ['basic','variable','noa','tenancy','pledged','unpledged','car','personal','guarantor','card','overdraft'].forEach(k=>{
+      const el=document.getElementById(k+i); if(el) o[k]=el.value;
+    });
+  });
+  price=document.getElementById('price').value;
+  tenure=document.getElementById('tenure').value;
+  stress=document.getElementById('stress').value;
+}
+
+/* ============ EVENTS ============ */
+function toggleInc(i,k){ readFieldValues(); owners[i].inc[k]=!owners[i].inc[k]; renderOwners(); recalc(); }
+function toggleLiab(i,k){ readFieldValues(); owners[i].liab[k]=!owners[i].liab[k]; renderOwners(); recalc(); }
+function setVarMode(i,m){ readFieldValues(); owners[i].varMode=m; renderOwners(); recalc(); }
+function setAge(i,v){ owners[i].age=parseInt(v)||0; recalc(); document.querySelectorAll('.ownerbar .sub'); }
+function stepAge(i,d){ owners[i].age=Math.min(99,Math.max(18,(owners[i].age||30)+d)); readFieldValues(); renderOwners(); recalc(); }
+function setExisting(i,v){ readFieldValues(); owners[i].existingLoans=parseInt(v)||0; applyLtvCap(); recalc(); }
+function addOwner(){ readFieldValues(); if(owners.length<3){owners.push(newOwner(30)); renderOwners(); recalc();} }
+function rmOwner(){ readFieldValues(); owners.pop(); renderOwners(); recalc(); }
+function onInput(){ readFieldValues(); recalc(); }
+function onLtvInput(){ ltvIntended=document.getElementById('ltv').value; readFieldValues(); applyLtvCap(); recalc(); }
+
+document.getElementById('txseg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  if(b.disabled)return;
+  tx=b.dataset.tx; [...document.querySelectorAll('#txseg button')].forEach(x=>x.classList.toggle('sel',x===b));
+  readFieldValues(); applyLtvCap(); recalc();
+});
+document.getElementById('ptype').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  pt=b.dataset.pt; [...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x===b));
+  readFieldValues();
+  // set/blank defaults per type
+  if(ltvIntended==='' || !isResidential(pt)) ltvIntended=defaultLtv(pt);
+  document.getElementById('stress').value = (stress==='' || !isResidential(pt)) ? defaultStress(pt) : stress;
+  stress=document.getElementById('stress').value;
+  // cash-out + HDB not allowed
+  const coBtn=document.querySelector('#txseg [data-tx="cashout"]');
+  if(pt==='hdb'){ coBtn.disabled=true; if(tx==='cashout'){tx='purchase'; document.querySelector('#txseg [data-tx="purchase"]').classList.add('sel'); coBtn.classList.remove('sel');} }
+  else coBtn.disabled=false;
+  applyLtvCap(); recalc();
+});
+
+/* apply the LTV cap + restore-intended logic */
+function applyLtvCap(){
+  const ltvEl=document.getElementById('ltv');
+  const capLbl=document.getElementById('ltvcap');
+  if(!isResidential(pt)){
+    // commercial/industrial: no cap, may exceed 100, blank default
+    ltvEl.disabled=false;
+    ltvEl.value = ltvIntended;
+    capLbl.textContent='(no cap)';
+    return;
+  }
+  const {cap,extended}=residentialLtvCap();
+  const intended = parseFloat(ltvIntended);
+  const shown = isNaN(intended)? '' : Math.min(intended, cap);
+  ltvEl.value = shown;
+  capLbl.textContent = `(max ${cap}%${extended?' · extended':''})`;
+}
+
+/* ============ CALC ============ */
+function pv(payment, rateMonthly, n){ if(rateMonthly===0) return payment*n; return payment*(1-Math.pow(1+rateMonthly,-n))/rateMonthly; }
+function recalc(){
+  // IWAA + income
+  let totInc=0, weighted=0, totDebt=0;
+  owners.forEach(o=>{ const r=recognised(o); totInc+=r.total; weighted+=r.total*(o.age||0); totDebt+=ownerDebt(o); });
+  const iwaa = totInc<=0?0:Math.ceil(parseFloat((weighted/totInc).toFixed(3)));
+  document.getElementById('iwaa').innerHTML = iwaa+'<small> yrs</small>';
+
+  const P=parseFloat(price)||0;
+  const ltvEff = parseFloat(document.getElementById('ltv').value)||0;
+  const n=(parseFloat(tenure)||0)*12;
+  const r=((parseFloat(stress)||0)/100)/12;
+
+  // payment caps
+  const tdsrPay = Math.max(totInc*0.55 - totDebt, 0);
+  const msrPay  = isMSR(pt) ? totInc*0.30 : Infinity;
+  const allowedPay = Math.min(tdsrPay, msrPay);
+  const loanByIncome = n>0 ? pv(allowedPay, r, n) : 0;
+  const loanByLtv = P*ltvEff/100;
+  const maxLoan = Math.min(loanByIncome, loanByLtv>0?loanByLtv:loanByIncome);
+
+  const down = Math.max(P - maxLoan, 0);
+  const {maxExisting,extended}=isResidential(pt)?residentialLtvCap():{maxExisting:0,extended:false};
+  const cashFrac = minCashFrac(pt,maxExisting,extended);
+  const cash = Math.min(cashFrac*P, down);
+  const cpf = isResidential(pt) ? Math.max(down-cash,0) : 0;
+
+  const fmt=v=>'S$'+Math.round(v).toLocaleString();
+  let html='';
+  html+=`<tr><td>Recognised income (combined)</td><td>${fmt(totInc)}/mo</td></tr>`;
+  html+=`<tr class="sub"><td>Monthly debt (TDSR deduction)</td><td>${fmt(totDebt)}/mo</td></tr>`;
+  html+=`<tr><td>TDSR 55% capacity</td><td>${fmt(tdsrPay)}/mo</td></tr>`;
+  if(isMSR(pt)) html+=`<tr><td>MSR 30% capacity</td><td>${fmt(totInc*0.30)}/mo</td></tr>`;
+  html+=`<tr class="sub"><td>Loan by income (PV)</td><td>${fmt(loanByIncome)}</td></tr>`;
+  html+=`<tr class="sub"><td>Loan by LTV (${ltvEff||0}%)</td><td>${P>0?fmt(loanByLtv):'—'}</td></tr>`;
+  html+=`<tr class="tot"><td>Max Loan</td><td>${fmt(maxLoan)}</td></tr>`;
+  if(P>0){
+    html+=`<tr><td>Downpayment</td><td>${fmt(down)}</td></tr>`;
+    if(isResidential(pt)){
+      html+=`<tr class="sub"><td>&nbsp;&nbsp;Cash (min ${Math.round(cashFrac*100)}%)</td><td>${fmt(cash)}</td></tr>`;
+      html+=`<tr class="sub"><td>&nbsp;&nbsp;CPF and/or Cash</td><td>${fmt(cpf)}</td></tr>`;
+    } else {
+      html+=`<tr class="sub"><td>&nbsp;&nbsp;Cash (100%)</td><td>${fmt(down)}</td></tr>`;
+    }
+  }
+  document.getElementById('restable').innerHTML=html;
+
+  // notes
+  const txn={purchase:'Purchase — residential LTV auto-caps by tenure bracket.',refinance:'Refinance — extended tenure allowed, LTV stays at purchase level (not capped to 55%).',cashout:'Cash-Out — HDB not allowed; EC/Private only.'};
+  document.getElementById('txnote').textContent=txn[tx];
+  const ptn = isResidential(pt)
+    ? `${pt.toUpperCase()} · ${isMSR(pt)?'MSR + TDSR':'TDSR only'} · std tenure ${stdTenureCap(pt)}y / extended ${extTenureCap(pt)}y`
+    : `${pt[0].toUpperCase()+pt.slice(1)} · TDSR only · LTV & Stress blank + uncapped (may exceed 100%) · 100% cash, no CPF`;
+  document.getElementById('ptnote').textContent=ptn;
+  document.getElementById('tencap').textContent = isResidential(pt)? `(max ${extTenureCap(pt)})` : '';
+  document.getElementById('resnote').innerHTML = totInc<=0 ? 'Enter income to compute.' :
+    (isResidential(pt) && extended && tx==='purchase' ? 'Tenure is in the EXTENDED bracket → LTV auto-capped to '+residentialLtvCap().cap+'%. Lower the tenure to restore your LTV.' : '');
+}
+
+/* ============ SAMPLE / RESET ============ */
+function fillSample(){
+  owners=[newOwner(35),newOwner(42)];
+  owners[0].inc={salary:true,noa:false,tenancy:true,pledged:false,unpledged:false};
+  owners[0].basic='8000'; owners[0].variable='2000'; owners[0].tenancy='3000';
+  owners[0].liab={car:true,personal:false,guarantor:false,card:true,overdraft:false};
+  owners[0].car='900'; owners[0].card='15000';
+  owners[1].inc={salary:false,noa:true,tenancy:false,pledged:true,unpledged:false};
+  owners[1].noa='150000'; owners[1].pledged='200000';
+  pt='hdb'; tx='purchase'; price='800000'; tenure='25'; stress='3.5'; ltvIntended='75';
+  syncTopUI(); renderOwners();
+  document.getElementById('price').value=price; document.getElementById('tenure').value=tenure; document.getElementById('stress').value=stress;
+  applyLtvCap(); recalc();
+}
+function resetAll(){
+  owners=[newOwner(35),newOwner(40)]; tx='purchase'; pt='private'; price=''; tenure=''; stress=defaultStress('private'); ltvIntended=defaultLtv('private');
+  syncTopUI(); renderOwners();
+  document.getElementById('price').value=''; document.getElementById('tenure').value=''; document.getElementById('stress').value=stress;
+  applyLtvCap(); recalc();
+}
+function syncTopUI(){
+  [...document.querySelectorAll('#txseg button')].forEach(x=>x.classList.toggle('sel',x.dataset.tx===tx));
+  [...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x.dataset.pt===pt));
+  const coBtn=document.querySelector('#txseg [data-tx="cashout"]'); coBtn.disabled=(pt==='hdb');
+}
+
+/* clock */
+function tick(){const d=new Date();document.getElementById('clock').textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
+tick();setInterval(tick,15000);
+
+/* init */
+stress=defaultStress('private'); ltvIntended=defaultLtv('private');
+renderOwners();
+document.getElementById('stress').value=stress;
+applyLtvCap(); recalc();
+</script>
+</body>
+</html>
