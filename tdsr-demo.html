@@ -138,7 +138,7 @@ Summary</span></div>
         </div>
         <div class="field" id="wrap_stress"><div class="fl">Stress-Test Rate</div><div class="fr"><input id="stress" type="text" inputmode="decimal" placeholder="—" oninput="onInput()"><span class="px">%</span></div></div>
         <div class="sec-h" style="margin:6px 0 6px;">Number of owners</div>
-        <select class="cnt" id="numOwners" onchange="setNumOwners(this.value)"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
+        <select class="cnt" id="numOwners" onchange="setNumOwners(this.value)"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select>
       </div>
       <div class="divider"></div>
       <div id="owners"></div>
@@ -205,7 +205,7 @@ const INC_SRC=[{k:'salary',l:'Salary'},{k:'noa',l:'NOA'},{k:'tenancy',l:'Tenancy
 const LIAB_SRC=[{k:'car',l:'Car Loan'},{k:'personal',l:'Personal Loan'},{k:'guarantor',l:'Guarantor'},{k:'card',l:'Credit Card'},{k:'overdraft',l:'Overdraft'}];
 function newOwner(age){return{age,inc:{salary:false,noa:false,tenancy:false,pledged:false,unpledged:false},basic:'',variable:'',varMode:'m',noa:'',tenancy:'',pledgeFund:'',showFund:'',
   liab:{car:false,personal:false,guarantor:false,card:false,overdraft:false},car:'',personal:'',guarantor:'',cardCount:0,cardVals:[],odCount:0,odVals:[],existingLoans:0};}
-let owners=[newOwner(35),newOwner(40)];
+let owners=[newOwner(35)];
 let tx='purchase',pt='private',price='',tenure='',stress='',ltvIntended='',pledgeX='',showX='',step=1,efaMode='ps',incBy='';
 
 const isResidential=t=>(t==='private'||t==='hdb'||t==='ec');
@@ -422,7 +422,7 @@ function fillSample(){
   document.getElementById('pledgeX').value='';document.getElementById('showX').value='';
   applyLtvCap();recalc();goStep(1);
 }
-function resetAll(){owners=[newOwner(35),newOwner(40)];tx='purchase';pt='private';price='';tenure='';stress=defaultStress('private');ltvIntended=defaultLtv('private');pledgeX='';showX='';incBy='';
+function resetAll(){owners=[newOwner(35)];tx='purchase';pt='private';price='';tenure='';stress=defaultStress('private');ltvIntended=defaultLtv('private');pledgeX='';showX='';incBy='';
   syncTop();renderOwners();document.getElementById('price').value='';document.getElementById('tenure').value='';document.getElementById('stress').value=stress;['pledgeX','showX','incBy'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});applyLtvCap();recalc();goStep(1);}
 function syncTop(){[...document.querySelectorAll('#txseg button')].forEach(x=>x.classList.toggle('sel',x.dataset.tx===tx));[...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x.dataset.pt===pt));document.querySelector('#txseg [data-tx="cashout"]').disabled=(pt==='hdb');}
 
