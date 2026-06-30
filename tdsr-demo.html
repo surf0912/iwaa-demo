@@ -3,147 +3,193 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TDSR / MSR Calculator — Demo</title>
+<title>TDSR Calculator — Demo</title>
 <style>
-  :root{--red:#F0112D;--red-dark:#C90D24;--ink:#1C1C1E;--gray:#8A8A8E;--field:#EFEFF1;--underline:#2C2C2E;--white:#fff;--bg:#D9DADE;--fade:#F7B7C0;}
+  /* App-faithful palette (from constants.dart) */
+  :root{--red:#FF0038;--redfade:rgba(255,0,56,0.2);--bg:#FAFAFA;--field:#EFEFEF;--ink:#1c1c1c;--gray:#7a7a7a;--label:#8a8a8a;--line:#2c2c2e;}
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;justify-content:center;padding:16px 0;min-height:100vh;}
-  .phone{width:100%;max-width:440px;background:var(--white);border-radius:40px;overflow:hidden;box-shadow:0 12px 50px rgba(0,0,0,.28);display:flex;flex-direction:column;}
-  .appbar{background:var(--red);color:#fff;padding:16px 20px 14px;}
-  .appbar .top{display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-bottom:10px;}
-  .appbar h1{font-size:19px;font-weight:800;}
-  .steps{display:flex;align-items:center;gap:6px;padding:12px 18px;background:#fff;border-bottom:1px solid #eee;}
-  .steps .s{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--gray);}
-  .steps .s .n{width:22px;height:22px;border-radius:50%;background:#eee;color:var(--gray);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
-  .steps .s.on .n{background:var(--red);color:#fff;} .steps .s.on{color:var(--ink);}
-  .steps .bar{flex:1;height:2px;background:#eee;}
-  main{background:#FAFAFB;padding:14px 16px 24px;}
-  .card{background:#fff;border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px;margin-bottom:14px;}
-  .sec-title{font-size:12px;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin:0 0 10px;}
-  .seg{display:flex;background:#fff;border-radius:9px;padding:3px;box-shadow:0 1px 3px rgba(0,0,0,.12);gap:3px;}
-  .seg button{flex:1;border:none;background:transparent;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--gray);padding:8px 4px;border-radius:7px;cursor:pointer;}
-  .seg button.sel{background:var(--red);color:#fff;} .seg button:disabled{opacity:.35;cursor:not-allowed;}
-  .ptype{display:flex;flex-wrap:wrap;gap:8px;}
-  .ptype button{border:none;cursor:pointer;background:var(--field);color:var(--ink);font-size:13px;font-weight:700;padding:10px 12px;border-radius:9px;font-family:inherit;flex:1 1 28%;}
-  .ptype button.sel{background:var(--red);color:#fff;}
-  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 6px;}
-  .chip{border:none;cursor:pointer;background:var(--field);color:var(--ink);font-size:12.5px;font-weight:600;padding:9px 11px;border-radius:10px;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}
-  .chip.sel{background:var(--red);color:#fff;} .chip .tk{display:none;}.chip.sel .tk{display:inline;}
-  .chips-label{font-size:11.5px;color:var(--gray);margin:8px 2px 6px;font-weight:600;}
-  .field{background:var(--field);border-radius:9px 9px 0 0;border-bottom:2px solid var(--underline);padding:8px 12px 7px;margin-bottom:10px;}
+  body{font-family:Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#d7d7d7;color:var(--ink);display:flex;justify-content:center;padding:14px 0;min-height:100vh;}
+  .app{width:100%;max-width:430px;background:#fff;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;}
+  /* App bar */
+  .appbar{background:var(--red);color:#fff;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
+  .appbar .back{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;}
+  .appbar .back svg{width:18px;height:18px;fill:#fff;}
+  .appbar .dnd{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);}
+  .appbar .dnd svg{width:20px;height:20px;fill:rgba(255,255,255,.85);}
+  /* Header: title + steps */
+  .header{padding:20px 25px;background:#fff;}
+  .header .title{display:flex;align-items:center;gap:10px;}
+  .header .title svg{width:28px;height:28px;fill:var(--red);}
+  .header .title h1{font-size:20px;font-weight:700;color:var(--red);}
+  .stepdots{display:flex;align-items:center;margin-top:30px;}
+  .dot{width:20px;height:20px;border-radius:50%;background:var(--redfade);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 auto;cursor:pointer;}
+  .dot.on{background:var(--red);}
+  .ln{height:1.5px;flex:1;background:var(--redfade);} .ln.on{background:var(--red);}
+  .steplabels{display:flex;justify-content:space-between;margin-top:5px;}
+  .steplabels span{font-size:9px;color:var(--red);white-space:pre;line-height:1.25;}
+  .steplabels span:nth-child(2){text-align:center;} .steplabels span:nth-child(3){text-align:right;}
+  /* Body sections */
+  main{background:var(--bg);}
+  .sec{padding:14px 25px;}
+  .sec-h{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px;}
+  /* Owner red bar (full width) */
+  .ownerbar{background:var(--red);color:#fff;width:100%;padding:11px 25px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;}
+  .ownerbar .rt{display:flex;align-items:center;gap:10px;}
+  .ownerbar .sub{font-size:11px;font-weight:600;opacity:.9;}
+  .ownerbar .ic{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;font-family:inherit;line-height:1;}
+  .ownerbody{background:var(--bg);padding:10px 25px 6px;}
+  /* Material-style filled underline field */
+  .field{background:var(--field);border-bottom:1.5px solid #9a9a9a;padding:7px 12px 6px;margin-bottom:13px;}
   .field.disabled{opacity:.45;}
-  .field .fl{font-size:12px;color:var(--gray);margin-bottom:2px;display:flex;align-items:center;justify-content:space-between;}
-  .field .fr{display:flex;align-items:baseline;gap:6px;}
+  .field:focus-within{border-bottom-color:var(--red);}
+  .field .fl{font-size:11px;color:var(--label);margin-bottom:1px;display:flex;align-items:center;justify-content:space-between;min-height:14px;}
+  .field .fr{display:flex;align-items:baseline;gap:5px;}
   .field .px{font-size:14px;color:var(--ink);}
-  .field input{flex:1;border:none;background:transparent;font-size:16px;font-weight:600;color:var(--ink);text-align:right;width:100%;font-family:inherit;}
+  .field input{flex:1;border:none;background:transparent;font-size:15px;font-weight:500;color:var(--ink);text-align:right;width:100%;font-family:inherit;}
   .field input:focus{outline:none;}
-  .field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  .miniseg{display:inline-flex;background:#fff;border-radius:7px;padding:2px;box-shadow:0 1px 2px rgba(0,0,0,.12);}
-  .miniseg button{border:none;background:transparent;font-family:inherit;font-size:10.5px;font-weight:700;color:var(--gray);padding:3px 8px;border-radius:5px;cursor:pointer;}
+  /* Income/liability chips (new feature, styled to match) */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 8px;}
+  .chip{border:none;cursor:pointer;background:var(--field);color:var(--ink);font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:5px;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}
+  .chip.sel{background:var(--red);color:#fff;}
+  .chip .tk{display:none;}.chip.sel .tk{display:inline;}
+  .chips-label{font-size:12px;font-weight:700;color:var(--ink);margin:10px 0 7px;}
+  /* Property + transaction buttons (ElevatedButton style) */
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;}
+  .btnrow button{border:none;cursor:pointer;background:rgba(255,255,255,.85);color:#000;font-size:13px;font-weight:600;padding:10px 13px;border-radius:5px;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .btnrow button.sel{background:var(--red);color:#fff;}
+  .btnrow button:disabled{opacity:.35;cursor:not-allowed;}
+  .ptype button{flex:1 1 28%;}
+  .txrow button{flex:1;}
+  .miniseg{display:inline-flex;background:#fff;border-radius:5px;padding:2px;box-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .miniseg button{border:none;background:transparent;font-family:inherit;font-size:10.5px;font-weight:700;color:var(--gray);padding:3px 8px;border-radius:4px;cursor:pointer;}
   .miniseg button.sel{background:var(--red);color:#fff;}
-  .ownerbar{background:var(--red);color:#fff;border-radius:11px;padding:9px 13px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:10px;}
-  .ownerbar .sub{font-size:11.5px;font-weight:600;opacity:.95;margin-left:auto;}
-  .ownerbar .rm{background:rgba(255,255,255,.25);border:none;color:#fff;width:22px;height:22px;border-radius:50%;font-size:14px;cursor:pointer;font-family:inherit;line-height:1;}
-  .age{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .miniseg button:disabled{opacity:.4;cursor:not-allowed;}
+  .age{display:flex;align-items:center;gap:10px;margin:6px 0 4px;}
   .age .lbl{font-size:12px;color:var(--gray);font-weight:600;}
-  .age input{width:54px;text-align:center;font-size:17px;font-weight:700;border:none;background:var(--field);border-radius:8px;padding:6px 0;font-family:inherit;}
-  .step{width:28px;height:28px;border-radius:50%;border:none;background:#fff;color:var(--red);font-size:17px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:pointer;font-family:inherit;}
-  .add{width:100%;background:#fff;border:2px dashed #E3A6AE;color:var(--red);border-radius:12px;padding:11px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin:2px 0 14px;}
+  .age input{width:52px;text-align:center;font-size:16px;font-weight:700;border:none;background:var(--field);border-radius:5px;padding:6px 0;font-family:inherit;}
+  .stp{width:26px;height:26px;border-radius:50%;border:none;background:#fff;color:var(--red);font-size:16px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:pointer;font-family:inherit;}
+  .add{width:calc(100% - 50px);margin:12px 25px;background:#fff;border:1.5px dashed var(--red);color:var(--red);border-radius:6px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
   .row2{display:flex;gap:10px;} .row2 .field{flex:1;}
+  select.cnt{font-family:inherit;font-size:14px;padding:8px 10px;border-radius:5px;border:1px solid #ccc;background:#fff;margin-bottom:12px;width:100%;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
-  td{padding:6px 2px;} td:last-child{text-align:right;font-weight:700;}
+  td{padding:6px 0;} td:last-child{text-align:right;font-weight:700;}
   tr.tot td{border-top:1.5px solid var(--ink);font-weight:800;color:var(--red);padding-top:9px;}
   tr.sub td{color:var(--gray);font-size:12px;}
-  .hl{font-size:30px;font-weight:800;color:var(--red);text-align:center;letter-spacing:-.5px;}
+  .hl{font-size:30px;font-weight:800;color:var(--red);text-align:center;letter-spacing:-.5px;padding:4px 0;}
   .hl small{font-size:13px;font-weight:700;}
+  .ev{font-size:15px;font-weight:800;color:var(--ink);}
+  .el{font-size:10px;color:var(--gray);margin-top:2px;}
+  .ebar{width:26px;height:3px;background:var(--red);margin-bottom:5px;}
+  .ebar.f{background:var(--redfade);}
+  .subh{color:var(--gray);font-weight:700;font-size:13px;margin:12px 0 6px;}
+  .crh{background:#fff;font-weight:800;font-size:15px;padding:14px 25px;}
+  .cswitch{display:inline-flex;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .cswitch button{border:none;font-family:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;cursor:pointer;background:#111;color:#fff;}
+  .cswitch button.sel{background:var(--red);}
+  .pbar{height:5px;border-radius:3px;background:var(--redfade);overflow:hidden;margin:6px 0 10px;}
+  .pbar>span{display:block;height:100%;background:var(--red);width:0;}
+  .leg{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px;}
+  .leg .ldot{width:10px;height:10px;border-radius:50%;background:var(--red);}
+  .leg .ldot.f{background:var(--redfade);}
   .note{font-size:11px;color:var(--gray);margin-top:8px;line-height:1.5;}
-  .navrow{display:flex;gap:10px;}
-  .navrow button{flex:1;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}
-  .btn-p{background:var(--red);color:#fff;} .btn-s{background:#fff;color:var(--red);border:2px solid var(--red);}
-  .tiny{font-size:11px;color:var(--gray);margin:-4px 2px 8px;}
+  .tiny{font-size:10.5px;color:var(--gray);margin:-6px 0 8px;}
+  .divider{height:8px;background:#eee;}
+  .navrow{display:flex;gap:10px;padding:14px 25px 22px;}
+  .navrow button{flex:1;border:none;border-radius:6px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .btn-p{background:var(--red);color:#fff;} .btn-s{background:#fff;color:var(--red);border:1.5px solid var(--red);}
   .hidden{display:none !important;}
 </style>
 </head>
 <body>
-<div class="phone">
+<div class="app">
   <div class="appbar">
-    <div class="top"><span id="clock">9:41</span><span>Demo</span></div>
-    <h1>TDSR / MSR Calculator</h1>
+    <span class="back"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"/></svg>Back</span>
+    <span class="dnd">Do Not Disturb<svg viewBox="0 0 24 24"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1z"/></svg></span>
   </div>
-  <div class="steps">
-    <div class="s on" id="ind1"><span class="n">1</span>Inputs</div><div class="bar"></div>
-    <div class="s" id="ind2"><span class="n">2</span>Pledge / Show</div><div class="bar"></div>
-    <div class="s" id="ind3"><span class="n">3</span>Summary</div>
+  <div class="header">
+    <div class="title">
+      <svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 4v3h10V6H7zm0 5v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v6h2v-6h-2zM7 15v2h2v-2H7zm4 0v2h2v-2h-2z"/></svg>
+      <h1>TDSR Calculator</h1>
+    </div>
+    <div class="stepdots">
+      <div class="dot on" id="ind1" onclick="goStep(1)">1</div><div class="ln" id="ln1"></div>
+      <div class="dot" id="ind2" onclick="goStep(2)">2</div><div class="ln" id="ln2"></div>
+      <div class="dot" id="ind3" onclick="goStep(3)">3</div>
+    </div>
+    <div class="steplabels"><span>Step 1
+Getting Started</span><span>Step 2
+Results</span><span>Step 3
+Summary</span></div>
   </div>
+
   <main>
-    <!-- ===================== STEP 1 ===================== -->
     <div id="page1">
-      <div class="card">
-        <div class="sec-title">Transaction Type</div>
-        <div class="seg" id="txseg">
-          <button data-tx="purchase" class="sel">Purchase</button>
-          <button data-tx="refinance">Refinance</button>
-          <button data-tx="cashout">Cash-Out</button>
-        </div>
-        <div class="note" id="txnote"></div>
-      </div>
-      <div class="card">
-        <div class="sec-title">Property Type</div>
-        <div class="ptype" id="ptype">
-          <button data-pt="private" class="sel">Private</button>
-          <button data-pt="hdb">HDB</button>
-          <button data-pt="ec">EC</button>
-          <button data-pt="commercial">Commercial</button>
-          <button data-pt="industrial">Industrial</button>
-        </div>
-        <div class="note" id="ptnote"></div>
-      </div>
-      <div id="owners"></div>
-      <button class="add" id="addBtn" onclick="addOwner()">+ Add Person 3</button>
-      <div class="card">
-        <div class="sec-title">Loan Details</div>
-        <div class="field" id="wrap_price"><div class="fl">Property Price (Purchase Price)</div><div class="fr"><span class="px">S$</span><input id="price" type="number" inputmode="decimal" placeholder="0" oninput="onInput()"></div></div>
+      <div class="sec"><div class="sec-h">Transaction Type</div>
+        <div class="btnrow txrow" id="txseg"><button data-tx="purchase" class="sel">Purchase</button><button data-tx="refinance">Refinance</button><button data-tx="cashout">Cash-Out</button></div>
+        <div class="note" id="txnote"></div></div>
+      <div class="sec"><div class="sec-h">Property Type</div>
+        <div class="btnrow ptype" id="ptype"><button data-pt="private" class="sel">Private</button><button data-pt="hdb">HDB</button><button data-pt="ec">EC</button><button data-pt="commercial">Commercial</button><button data-pt="industrial">Industrial</button></div>
+        <div class="note" id="ptnote"></div></div>
+      <div class="sec"><div class="sec-h">Loan Details</div>
+        <div class="field" id="wrap_price"><div class="fl">Property Price (Purchase Price)</div><div class="fr"><span class="px">S$</span><input id="price" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div>
         <div class="row2">
-          <div class="field" id="wrap_ltv"><div class="fl">Loan-to-Value <span id="ltvcap" style="font-size:10px;"></span></div><div class="fr"><input id="ltv" type="number" inputmode="decimal" placeholder="—" oninput="onLtvInput()" style="text-align:left;"><span class="px">%</span></div></div>
-          <div class="field" id="wrap_tenure"><div class="fl">Tenure (yrs) <span id="tencap" style="font-size:10px;"></span></div><div class="fr"><input id="tenure" type="number" inputmode="decimal" placeholder="—" oninput="onInput()" style="text-align:left;"></div></div>
+          <div class="field" id="wrap_ltv"><div class="fl">Loan-to-Value <span id="ltvcap" style="font-size:10px;"></span></div><div class="fr"><input id="ltv" type="text" inputmode="decimal" placeholder="—" oninput="onLtvInput()"><span class="px">%</span></div></div>
+          <div class="field" id="wrap_tenure"><div class="fl">Tenure (yrs) <span id="tencap" style="font-size:10px;"></span></div><div class="fr"><input id="tenure" type="text" inputmode="numeric" placeholder="—" oninput="onInput()"></div></div>
         </div>
-        <div class="field" id="wrap_stress"><div class="fl">Stress-Test Rate</div><div class="fr"><input id="stress" type="number" inputmode="decimal" placeholder="—" oninput="onInput()" style="text-align:left;"><span class="px">%</span></div></div>
+        <div class="field" id="wrap_stress"><div class="fl">Stress-Test Rate</div><div class="fr"><input id="stress" type="text" inputmode="decimal" placeholder="—" oninput="onInput()"><span class="px">%</span></div></div>
+        <div class="sec-h" style="margin:6px 0 6px;">Number of owners</div>
+        <select class="cnt" id="numOwners" onchange="setNumOwners(this.value)"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
       </div>
-      <div class="card">
-        <div class="sec-title">Eligibility</div>
-        <div class="hl" id="iwaa">0<small> yrs IWAA</small></div>
-        <table id="elig" style="margin-top:10px;"></table>
+      <div class="divider"></div>
+      <div id="owners"></div>
+    </div>
+
+    <div id="page2" class="hidden">
+      <div class="crh">Calculation Results</div>
+      <div class="sec">
+        <div class="subh" id="indivTdsrH">Individual TDSR Eligibility</div><div id="indivElig"></div>
+        <div class="subh" id="combTdsrH">Combined TDSR Eligibility</div><div id="combElig"></div>
         <div class="note" id="elignote"></div>
       </div>
+      <div class="sec" id="msrSec"><div class="subh">MSR Eligibility</div><div id="msrElig"></div></div>
+      <div class="divider"></div>
+      <div class="sec">
+        <div class="subh">Joint EFA Modelling</div>
+        <div id="efaStats" style="display:flex;gap:24px;margin-bottom:14px;"></div>
+        <div style="text-align:center;font-weight:700;font-size:13px;margin-bottom:4px;" id="efaPrice"></div>
+        <div class="pbar"><span id="pbarFill"></span></div>
+        <div class="leg"><span class="ldot"></span><span id="legLoan"></span></div>
+        <div class="leg"><span class="ldot f"></span><span id="legDown"></span></div>
+        <div style="font-size:12px;margin-bottom:12px;" id="legTenure"></div>
+        <div style="height:1px;background:var(--red);margin:6px 0 14px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <span style="font-weight:700;font-size:14px;">Calculator Switch <span title="Borrow: enter a target loan increase to see the pledge/show required. Pledge & Show: enter a joint pledge/show to see the loan increase." style="display:inline-flex;width:16px;height:16px;border-radius:50%;background:#111;color:#fff;font-size:11px;align-items:center;justify-content:center;cursor:help;">?</span></span>
+          <span class="cswitch"><button id="csBorrow" onclick="setEfaMode('borrow')">Borrow</button><button id="csPS" class="sel" onclick="setEfaMode('ps')">Pledge &amp; Show</button></span>
+        </div>
+        <div id="efaBorrow" class="hidden">
+          <div class="field"><div class="fl">To increase the loan by</div><div class="fr"><span class="px">S$</span><input id="incBy" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div>
+          <div style="display:flex;gap:28px;margin-top:2px;"><div><div class="ev" id="shouldPledge">S$0</div><div class="el">You should pledge</div></div><div><div class="ev" id="shouldShow">S$0</div><div class="el">You should show</div></div></div>
+        </div>
+        <div id="efaPS">
+          <div class="row2"><div class="field"><div class="fl">Joint pledge EFA</div><div class="fr"><span class="px">S$</span><input id="pledgeX" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div><div class="field"><div class="fl">Joint show EFA</div><div class="fr"><span class="px">S$</span><input id="showX" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div></div>
+          <div style="background:var(--field);border-radius:6px;padding:12px;text-align:center;"><div class="el" style="font-size:12px;">Loan increase</div><div class="ev" style="font-size:19px;" id="loanInc">S$0</div></div>
+        </div>
+        <div style="text-align:center;margin-top:16px;"><button onclick="resetEfa()" style="border:none;color:var(--red);background:none;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Reset Calculation</button></div>
+      </div>
     </div>
 
-    <!-- ===================== STEP 2 ===================== -->
-    <div id="page2" class="hidden">
-      <div class="card">
-        <div class="sec-title">Pledge / Show — increase your loan</div>
-        <div class="tiny">Pledge = cash locked for 48 mths (counts 100% / 48). Show = liquid cash shown (counts 30% / 48). Both raise recognised income, which raises the max loan (up to the LTV ceiling).</div>
-        <div class="field"><div class="fl">I will PLEDGE (cash, 4 yrs)</div><div class="fr"><span class="px">S$</span><input id="pledgeX" type="number" inputmode="decimal" placeholder="0" oninput="onInput()"></div></div>
-        <div class="field"><div class="fl">I will SHOW (liquid cash)</div><div class="fr"><span class="px">S$</span><input id="showX" type="number" inputmode="decimal" placeholder="0" oninput="onInput()"></div></div>
-        <div class="note" id="joint" style="color:var(--red);font-weight:700;"></div>
-      </div>
-      <div class="card">
-        <div class="sec-title">Effect</div>
-        <table id="boost"></table>
-        <div class="note" id="boostnote"></div>
-      </div>
-    </div>
-
-    <!-- ===================== STEP 3 ===================== -->
     <div id="page3" class="hidden">
-      <div class="card">
-        <div class="sec-title">Maximum Loan</div>
-        <div class="hl" id="finalLoan">S$0</div>
-        <div class="note" id="limitnote" style="text-align:center;"></div>
+      <div class="sec" style="background:#fff;"><div style="font-weight:800;font-size:17px;">Here is a summary</div><div style="font-weight:700;font-size:13px;color:var(--gray);margin-top:3px;">Base on your profile, this is our analysis</div></div>
+      <div class="sec">
+        <div style="text-align:center;font-weight:700;font-size:13px;margin-bottom:4px;" id="sumPrice"></div>
+        <div class="pbar"><span id="sumBar"></span></div>
+        <div class="leg"><span class="ldot"></span><span id="sumLegLoan"></span></div>
+        <div class="leg"><span class="ldot f"></span><span id="sumLegDown"></span></div>
+        <div style="font-size:12px;" id="sumLegTen"></div>
       </div>
-      <div class="card">
-        <div class="sec-title">Summary</div>
-        <table id="summary"></table>
-      </div>
+      <div class="divider"></div>
+      <div class="sec" id="sumCards"></div>
+      <div style="text-align:center;padding:2px 0 20px;"><button onclick="resetAll()" style="border:none;color:var(--red);background:none;font-weight:800;font-size:15px;letter-spacing:.5px;cursor:pointer;font-family:inherit;">START OVER</button></div>
     </div>
 
     <div class="navrow" id="nav"></div>
@@ -151,188 +197,234 @@
 </div>
 
 <script>
-/* ============ MODEL ============ */
+const num=v=>parseFloat(String(v==null?'':v).replace(/,/g,''))||0;
+function commas(s){s=String(s).replace(/,/g,'');if(s==='')return '';let[i,d]=s.split('.');i=(i||'').replace(/[^0-9]/g,'');const f=i?Number(i).toLocaleString('en-US'):'';return d!==undefined?f+'.'+d.replace(/[^0-9]/g,''):f;}
+function onMoney(el){const sel=el.selectionStart;const before=el.value.slice(0,sel).replace(/[^0-9]/g,'').length;const out=commas(el.value);el.value=out;let pos=0,c=0;while(pos<out.length&&c<before){if(/[0-9]/.test(out[pos]))c++;pos++;}try{el.setSelectionRange(pos,pos);}catch(e){}onInput();}
+
 const INC_SRC=[{k:'salary',l:'Salary'},{k:'noa',l:'NOA'},{k:'tenancy',l:'Tenancy'},{k:'pledged',l:'Pledged EFA'},{k:'unpledged',l:'Unpledged EFA'}];
 const LIAB_SRC=[{k:'car',l:'Car Loan'},{k:'personal',l:'Personal Loan'},{k:'guarantor',l:'Guarantor'},{k:'card',l:'Credit Card'},{k:'overdraft',l:'Overdraft'}];
-function newOwner(age){return{age,inc:{salary:false,noa:false,tenancy:false,pledged:false,unpledged:false},basic:'',variable:'',varMode:'m',noa:'',tenancy:'',pledged:'',unpledged:'',liab:{car:false,personal:false,guarantor:false,card:false,overdraft:false},car:'',personal:'',guarantor:'',card:'',overdraft:'',existingLoans:0};}
+function newOwner(age){return{age,inc:{salary:false,noa:false,tenancy:false,pledged:false,unpledged:false},basic:'',variable:'',varMode:'m',noa:'',tenancy:'',pledgeFund:'',showFund:'',
+  liab:{car:false,personal:false,guarantor:false,card:false,overdraft:false},car:'',personal:'',guarantor:'',cardCount:0,cardVals:[],odCount:0,odVals:[],existingLoans:0};}
 let owners=[newOwner(35),newOwner(40)];
-let tx='purchase',pt='private',price='',tenure='',stress='',ltvIntended='',pledgeX='',showX='',step=1;
+let tx='purchase',pt='private',price='',tenure='',stress='',ltvIntended='',pledgeX='',showX='',step=1,efaMode='ps',incBy='';
 
-/* ============ RULES ============ */
 const isResidential=t=>(t==='private'||t==='hdb'||t==='ec');
 const isMSR=t=>(t==='hdb'||t==='ec');
 const stdTenureCap=t=>(t==='hdb'?25:30);
 const extTenureCap=t=>(t==='hdb'?30:35);
 const defaultStress=t=>isResidential(t)?'3.5':'';
 const defaultLtv=t=>isResidential(t)?'75':'';
-function recognised(o){const num=v=>parseFloat(v)||0;let emp=0;const basic=num(o.basic);
-  if(o.inc.salary){let used=0;const ve=o.variable!==''&&num(o.variable)>0;const vm=o.varMode==='a'?num(o.variable)/12:num(o.variable);
+function recognised(o){let emp=0;const basic=num(o.basic);
+  if(o.inc.salary){let used=0;const ve=num(o.variable)>0;const vm=o.varMode==='a'?num(o.variable)/12:num(o.variable);
     if(ve)used=vm;else if(o.inc.noa)used=Math.max((num(o.noa)-basic*12)/12,0);emp=basic+used*0.70;}
   else if(o.inc.noa){emp=(num(o.noa)*0.70)/12;}
-  const ten=o.inc.tenancy?num(o.tenancy)*0.70:0,pl=o.inc.pledged?num(o.pledged)/48:0,un=o.inc.unpledged?num(o.unpledged)*0.30/48:0;
+  const ten=o.inc.tenancy?num(o.tenancy)*0.70:0,pl=o.inc.pledged?num(o.pledgeFund)/48:0,un=o.inc.unpledged?num(o.showFund)*0.30/48:0;
   return{emp,ten,pl,un,total:emp+ten+pl+un};}
-function ownerDebt(o){const num=v=>parseFloat(v)||0;let d=0;if(o.liab.car)d+=num(o.car);if(o.liab.personal)d+=num(o.personal);if(o.liab.guarantor)d+=num(o.guarantor);if(o.liab.card){const c=num(o.card);d+=(c===0?50:c*0.03);}if(o.liab.overdraft)d+=num(o.overdraft);return d;}
+function ownerDebt(o){let d=0;if(o.liab.car)d+=num(o.car);if(o.liab.personal)d+=num(o.personal);if(o.liab.guarantor)d+=num(o.guarantor);
+  if(o.liab.card)for(let j=0;j<o.cardCount;j++){const x=num(o.cardVals[j]);d+=(x===0?50:x);}
+  if(o.liab.overdraft)for(let j=0;j<o.odCount;j++)d+=num(o.odVals[j]);
+  return d;}
 function ltvCapFor(lc,ext){return (ext?[55,25,15]:[75,45,35])[Math.min(lc,2)];}
 function minCashFrac(t,lc,ext){if(!isResidential(t))return 1;if(lc===0)return ext?0.10:0.05;return 0.25;}
-function residentialLtvCap(){const me=Math.max(...owners.map(o=>o.existingLoans),0);let ext=(parseFloat(tenure)||0)>stdTenureCap(pt);if(tx!=='purchase')ext=false;return{cap:ltvCapFor(me,ext),extended:ext,maxExisting:me};}
+function residentialLtvCap(){const me=Math.max(...owners.map(o=>o.existingLoans),0);let ext=num(tenure)>stdTenureCap(pt);if(tx!=='purchase')ext=false;return{cap:ltvCapFor(me,ext),extended:ext,maxExisting:me};}
 function pv(p,r,n){if(r===0)return p*n;return p*(1-Math.pow(1+r,-n))/r;}
-
-/* core calc; extraPledge/extraShow boost income (Step-2 modelling) */
 function calcAll(eP,eS){
-  let inc=0,wt=0,debt=0;
-  owners.forEach(o=>{const r=recognised(o);inc+=r.total;wt+=r.total*(o.age||0);debt+=ownerDebt(o);});
+  let inc=0,wt=0,debt=0;owners.forEach(o=>{const r=recognised(o);inc+=r.total;wt+=r.total*(o.age||0);debt+=ownerDebt(o);});
   const iwaa=inc<=0?0:Math.ceil(parseFloat((wt/inc).toFixed(3)));
-  const boost=(parseFloat(eP)||0)/48 + (parseFloat(eS)||0)*0.30/48;
-  const bInc=inc+boost;
-  const P=parseFloat(price)||0, ltvEff=parseFloat(document.getElementById('ltv')?document.getElementById('ltv').value:'')||(parseFloat(ltvIntended)||0);
-  const n=(parseFloat(tenure)||0)*12, r=((parseFloat(stress)||0)/100)/12;
-  const tdsrPay=Math.max(bInc*0.55-debt,0), msrPay=isMSR(pt)?bInc*0.30:Infinity, pay=Math.min(tdsrPay,msrPay);
-  const loanInc=n>0?pv(pay,r,n):0, loanLtv=P*ltvEff/100, maxLoan=Math.min(loanInc, loanLtv>0?loanLtv:loanInc);
-  const limitedBy = (loanLtv>0&&loanLtv<loanInc)?'LTV':(isMSR(pt)&&msrPay<tdsrPay?'MSR':'TDSR');
-  const down=Math.max(P-maxLoan,0);
-  const rc=isResidential(pt)?residentialLtvCap():{maxExisting:0,extended:false};
-  const cf=minCashFrac(pt,rc.maxExisting,rc.extended), cash=Math.min(cf*P,down), cpf=isResidential(pt)?Math.max(down-cash,0):0;
+  const boost=num(eP)/48+num(eS)*0.30/48,bInc=inc+boost;
+  const P=num(price),ltvEff=num(document.getElementById('ltv')?document.getElementById('ltv').value:'')||num(ltvIntended);
+  const n=num(tenure)*12,r=(num(stress)/100)/12;
+  const tdsrPay=Math.max(bInc*0.55-debt,0),msrPay=isMSR(pt)?bInc*0.30:Infinity,pay=Math.min(tdsrPay,msrPay);
+  const loanInc=n>0?pv(pay,r,n):0,loanLtv=P*ltvEff/100,maxLoan=Math.min(loanInc,loanLtv>0?loanLtv:loanInc);
+  const limitedBy=(loanLtv>0&&loanLtv<loanInc)?'LTV':(isMSR(pt)&&msrPay<tdsrPay?'MSR':'TDSR');
+  const down=Math.max(P-maxLoan,0);const rc=isResidential(pt)?residentialLtvCap():{maxExisting:0,extended:false};
+  const cf=minCashFrac(pt,rc.maxExisting,rc.extended),cash=Math.min(cf*P,down),cpf=isResidential(pt)?Math.max(down-cash,0):0;
   return{inc,debt,iwaa,bInc,boost,tdsrPay,msrPay,pay,loanInc,loanLtv,maxLoan,limitedBy,down,cf,cash,cpf,ltvEff,P};
 }
 
-/* ============ RENDER STEP 1 ============ */
-function field(id,label){return `<div class="field" id="wrap_${id}"><div class="fl">${label}</div><div class="fr"><span class="px">S$</span><input id="${id}" type="number" inputmode="decimal" placeholder="0" oninput="onInput()"></div></div>`;}
+function mf(id,label){return `<div class="field" id="wrap_${id}"><div class="fl">${label}</div><div class="fr"><span class="px">S$</span><input id="${id}" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div>`;}
+function countSel(i,kind,cur,min,max){let o='';for(let n=min;n<=max;n++)o+=`<option value="${n}" ${n==cur?'selected':''}>${n}</option>`;return `<select class="cnt" onchange="${kind}(${i},this.value)">${o}</select>`;}
 function renderOwners(){
   document.getElementById('owners').innerHTML=owners.map((o,i)=>{
     const r=recognised(o);
     const inc=INC_SRC.map(s=>`<button class="chip ${o.inc[s.k]?'sel':''}" onclick="toggleInc(${i},'${s.k}')"><span class="tk">&#10003;</span>${s.l}</button>`).join('');
     const liab=LIAB_SRC.map(s=>`<button class="chip ${o.liab[s.k]?'sel':''}" onclick="toggleLiab(${i},'${s.k}')"><span class="tk">&#10003;</span>${s.l}</button>`).join('');
     let f='';
-    if(o.inc.salary){f+=field('basic'+i,'Basic Salary (monthly)');
-      const vd=o.inc.noa&&(o.noa!==''&&(parseFloat(o.noa)||0)>0)&&!(o.variable!==''&&(parseFloat(o.variable)||0)>0);
-      f+=`<div class="field ${vd?'disabled':''}" id="wrap_variable${i}"><div class="fl">Variable Income<span class="miniseg"><button class="${o.varMode==='m'?'sel':''}" onclick="setVarMode(${i},'m')">Monthly</button><button class="${o.varMode==='a'?'sel':''}" onclick="setVarMode(${i},'a')">Annually</button></span></div><div class="fr"><span class="px">S$</span><input id="variable${i}" type="number" inputmode="decimal" placeholder="0" oninput="onInput()" ${vd?'disabled':''}></div></div>`;}
-    if(o.inc.noa){const nd=o.inc.salary&&(o.variable!==''&&(parseFloat(o.variable)||0)>0);
-      f+=`<div class="field ${nd?'disabled':''}" id="wrap_noa${i}"><div class="fl">Latest NOA (annual)${o.inc.salary?' — derives variable':''}</div><div class="fr"><span class="px">S$</span><input id="noa${i}" type="number" inputmode="decimal" placeholder="0" oninput="onInput()" ${nd?'disabled':''}></div></div>`;}
-    if(o.inc.tenancy)f+=field('tenancy'+i,'Tenancy Income (monthly)');
-    if(o.inc.pledged)f+=field('pledged'+i,'Pledged EFA');
-    if(o.inc.unpledged)f+=field('unpledged'+i,'Unpledged EFA');
+    if(o.inc.salary){f+=mf('basic'+i,'Basic Salary (monthly)');
+      f+=`<div class="field" id="wrap_variable${i}"><div class="fl">Variable Income<span class="miniseg"><button id="vsm${i}" class="${o.varMode==='m'?'sel':''}" onclick="setVarMode(${i},'m')">Monthly</button><button id="vsa${i}" class="${o.varMode==='a'?'sel':''}" onclick="setVarMode(${i},'a')">Annually</button></span></div><div class="fr"><span class="px">S$</span><input id="variable${i}" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div>`;}
+    if(o.inc.noa)f+=`<div class="field" id="wrap_noa${i}"><div class="fl">Latest NOA (annual)${o.inc.salary?' — derives variable':''}</div><div class="fr"><span class="px">S$</span><input id="noa${i}" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div>`;
+    if(o.inc.tenancy)f+=mf('tenancy'+i,'Tenancy Income (monthly)');
+    if(o.inc.pledged)f+=mf('pledgeFund'+i,'Pledged EFA (Pledge Fund Amount)');
+    if(o.inc.unpledged)f+=mf('showFund'+i,'Unpledged EFA (Show Fund Amount)');
     let lf='';
-    if(o.liab.car)lf+=field('car'+i,'Car Loan (monthly)');
-    if(o.liab.personal)lf+=field('personal'+i,'Personal Loan (monthly)');
-    if(o.liab.guarantor)lf+=field('guarantor'+i,'Guarantor Servicing (monthly)');
-    if(o.liab.card)lf+=field('card'+i,'Credit Card outstanding');
-    if(o.liab.overdraft)lf+=field('overdraft'+i,'Unsecured Overdraft');
-    return `<div class="card"><div class="ownerbar"><span>Person ${i+1}</span><span class="sub">recog S$${Math.round(r.total).toLocaleString()}/mo</span>${i===2?`<button class="rm" onclick="rmOwner()">&#215;</button>`:''}</div>
-      <div class="age"><span class="lbl">Age</span><button class="step" onclick="stepAge(${i},-1)">&minus;</button><input type="number" value="${o.age}" oninput="setAge(${i},this.value)"><button class="step" onclick="stepAge(${i},1)">+</button>
-      <span class="lbl" style="margin-left:auto;">Existing loans</span><select onchange="setExisting(${i},this.value)" style="font-family:inherit;font-size:13px;padding:5px;border-radius:7px;"><option ${o.existingLoans==0?'selected':''}>0</option><option ${o.existingLoans==1?'selected':''}>1</option><option ${o.existingLoans==2?'selected':''}>2</option></select></div>
+    if(o.liab.car)lf+=mf('car'+i,'Car Loan (monthly)');
+    if(o.liab.personal)lf+=mf('personal'+i,'Personal Loan (monthly)');
+    if(o.liab.guarantor)lf+=mf('guarantor'+i,'Guarantor Servicing (monthly)');
+    if(o.liab.card){lf+=`<div class="chips-label" style="margin-top:2px;">Number of credit cards</div>`+countSel(i,'setCardCount',o.cardCount,1,10)+`<div class="tiny">If $0, counts as $50 for calculation.</div>`;
+      for(let j=0;j<o.cardCount;j++)lf+=mf('card'+i+'_'+j,'Credit Card '+(j+1));}
+    if(o.liab.overdraft){lf+=`<div class="chips-label" style="margin-top:2px;">Number of unsecured overdrafts</div>`+countSel(i,'setOdCount',o.odCount,1,10);
+      for(let j=0;j<o.odCount;j++)lf+=mf('od'+i+'_'+j,'Unsecured Overdraft '+(j+1));}
+    return `<div class="ownerbar"><span class="rt">Home Owner ${i+1} Information</span><span style="display:flex;align-items:center;gap:10px;"><span class="sub" id="recog${i}">S$${Math.round(r.total).toLocaleString()}/mo</span><span class="ic">&#9650;</span></span></div>
+      <div class="ownerbody">
+      <div class="age"><span class="lbl">Age</span><button class="stp" onclick="stepAge(${i},-1)">&minus;</button><input type="number" value="${o.age}" oninput="setAge(${i},this.value)"><button class="stp" onclick="stepAge(${i},1)">+</button>
+      <span class="lbl" style="margin-left:auto;">Existing loans</span><select class="cnt" style="width:auto;margin:0;" onchange="setExisting(${i},this.value)"><option ${o.existingLoans==0?'selected':''}>0</option><option ${o.existingLoans==1?'selected':''}>1</option><option ${o.existingLoans==2?'selected':''}>2</option></select></div>
       <div class="chips-label">Income Sources — select all that apply</div><div class="chips">${inc}</div>${f}
-      <div class="chips-label">Loans / Liabilities — select all that apply</div><div class="chips">${liab}</div>${lf}</div>`;
+      <div class="chips-label">Loans / Liabilities — select all that apply</div><div class="chips">${liab}</div>${lf}
+      </div>`;
   }).join('');
   restore();
-  document.getElementById('addBtn').classList.toggle('hidden',owners.length>=3);
+  const ne=document.getElementById('numOwners'); if(ne) ne.value=owners.length;
 }
-const F=['basic','variable','noa','tenancy','pledged','unpledged','car','personal','guarantor','card','overdraft'];
-function restore(){owners.forEach((o,i)=>F.forEach(k=>{const e=document.getElementById(k+i);if(e)e.value=o[k];}));}
-function readFields(){owners.forEach((o,i)=>F.forEach(k=>{const e=document.getElementById(k+i);if(e)o[k]=e.value;}));
-  price=val('price');tenure=val('tenure');stress=val('stress');pledgeX=val('pledgeX');showX=val('showX');}
-function val(id){const e=document.getElementById(id);return e?e.value:'';}
+const SF=['basic','variable','noa','tenancy','pledgeFund','showFund','car','personal','guarantor'];
+function restore(){owners.forEach((o,i)=>{SF.forEach(k=>{const e=document.getElementById(k+i);if(e)e.value=commas(o[k]);});
+  for(let j=0;j<o.cardCount;j++){const e=document.getElementById('card'+i+'_'+j);if(e)e.value=commas(o.cardVals[j]||'');}
+  for(let j=0;j<o.odCount;j++){const e=document.getElementById('od'+i+'_'+j);if(e)e.value=commas(o.odVals[j]||'');}});}
+function readFields(){owners.forEach((o,i)=>{SF.forEach(k=>{const e=document.getElementById(k+i);if(e)o[k]=e.value;});
+  for(let j=0;j<o.cardCount;j++){const e=document.getElementById('card'+i+'_'+j);if(e)o.cardVals[j]=e.value;}
+  for(let j=0;j<o.odCount;j++){const e=document.getElementById('od'+i+'_'+j);if(e)o.odVals[j]=e.value;}});
+  price=v('price');tenure=v('tenure');stress=v('stress');pledgeX=v('pledgeX');showX=v('showX');incBy=v('incBy');}
+function v(id){const e=document.getElementById(id);return e?e.value:'';}
 
-/* ============ EVENTS ============ */
+function applyExclusion(){owners.forEach((o,i)=>{
+  if(!(o.inc.salary&&o.inc.noa))return;
+  const ve=document.getElementById('variable'+i),ne=document.getElementById('noa'+i);
+  if(!ve||!ne)return;
+  const varHas=num(ve.value)>0,noaHas=num(ne.value)>0;
+  const disNoa=varHas, disVar=noaHas&&!varHas;
+  ne.disabled=disNoa; document.getElementById('wrap_noa'+i).classList.toggle('disabled',disNoa);
+  ve.disabled=disVar; document.getElementById('wrap_variable'+i).classList.toggle('disabled',disVar);
+  const a=document.getElementById('vsm'+i),b=document.getElementById('vsa'+i);if(a)a.disabled=disVar;if(b)b.disabled=disVar;
+});}
+
 function toggleInc(i,k){readFields();owners[i].inc[k]=!owners[i].inc[k];renderOwners();recalc();}
-function toggleLiab(i,k){readFields();owners[i].liab[k]=!owners[i].liab[k];renderOwners();recalc();}
+function toggleLiab(i,k){readFields();const on=!owners[i].liab[k];owners[i].liab[k]=on;
+  if(k==='card'){owners[i].cardCount=on?1:0;owners[i].cardVals=on?['']:[];}
+  if(k==='overdraft'){owners[i].odCount=on?1:0;owners[i].odVals=on?['']:[];}
+  renderOwners();recalc();}
+function setCardCount(i,n){readFields();n=parseInt(n)||1;owners[i].cardCount=n;while(owners[i].cardVals.length<n)owners[i].cardVals.push('');owners[i].cardVals.length=n;renderOwners();recalc();}
+function setOdCount(i,n){readFields();n=parseInt(n)||1;owners[i].odCount=n;while(owners[i].odVals.length<n)owners[i].odVals.push('');owners[i].odVals.length=n;renderOwners();recalc();}
 function setVarMode(i,m){readFields();owners[i].varMode=m;renderOwners();recalc();}
-function setAge(i,v){owners[i].age=parseInt(v)||0;recalc();}
+function setAge(i,val){owners[i].age=parseInt(val)||0;recalc();}
 function stepAge(i,d){owners[i].age=Math.min(99,Math.max(18,(owners[i].age||30)+d));readFields();renderOwners();recalc();}
-function setExisting(i,v){readFields();owners[i].existingLoans=parseInt(v)||0;applyLtvCap();recalc();}
-function addOwner(){readFields();if(owners.length<3){owners.push(newOwner(30));renderOwners();recalc();}}
-function rmOwner(){readFields();owners.pop();renderOwners();recalc();}
+function setExisting(i,val){readFields();owners[i].existingLoans=parseInt(val)||0;applyLtvCap();recalc();}
+function setNumOwners(n){readFields();n=parseInt(n)||1;while(owners.length<n)owners.push(newOwner(30));owners.length=n;renderOwners();recalc();}
 function onInput(){readFields();recalc();}
-function onLtvInput(){ltvIntended=val('ltv');readFields();applyLtvCap();recalc();}
+function onLtvInput(){ltvIntended=v('ltv');readFields();applyLtvCap();recalc();}
+function setEfaMode(m){readFields();efaMode=m;document.getElementById('csBorrow').classList.toggle('sel',m==='borrow');document.getElementById('csPS').classList.toggle('sel',m==='ps');document.getElementById('efaBorrow').classList.toggle('hidden',m!=='borrow');document.getElementById('efaPS').classList.toggle('hidden',m!=='ps');recalc();}
+function resetEfa(){pledgeX='';showX='';incBy='';['pledgeX','showX','incBy'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});recalc();}
 document.getElementById('txseg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;tx=b.dataset.tx;[...document.querySelectorAll('#txseg button')].forEach(x=>x.classList.toggle('sel',x===b));readFields();applyLtvCap();recalc();});
 document.getElementById('ptype').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pt=b.dataset.pt;[...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x===b));readFields();
   if(ltvIntended===''||!isResidential(pt))ltvIntended=defaultLtv(pt);
-  document.getElementById('stress').value=(stress===''||!isResidential(pt))?defaultStress(pt):stress;stress=val('stress');
+  document.getElementById('stress').value=(stress===''||!isResidential(pt))?defaultStress(pt):stress;stress=v('stress');
   const co=document.querySelector('#txseg [data-tx="cashout"]');if(pt==='hdb'){co.disabled=true;if(tx==='cashout'){tx='purchase';document.querySelector('#txseg [data-tx="purchase"]').classList.add('sel');co.classList.remove('sel');}}else co.disabled=false;
   applyLtvCap();recalc();});
 function applyLtvCap(){const e=document.getElementById('ltv'),lbl=document.getElementById('ltvcap');
   if(!isResidential(pt)){e.disabled=false;e.value=ltvIntended;lbl.textContent='(no cap)';return;}
-  const{cap,extended}=residentialLtvCap();const it=parseFloat(ltvIntended);e.value=isNaN(it)?'':Math.min(it,cap);lbl.textContent=`(max ${cap}%${extended?' · ext':''})`;}
+  const{cap,extended}=residentialLtvCap();const it=num(ltvIntended);e.value=ltvIntended===''?'':Math.min(it,cap);lbl.textContent=`(max ${cap}%${extended?' · ext':''})`;}
 
-/* ============ RECALC (all steps) ============ */
 function recalc(){
-  const fmt=v=>'S$'+Math.round(v).toLocaleString();
-  // step 1 eligibility (no boost)
+  const fmt=val=>'S$'+Math.round(val).toLocaleString();
+  applyExclusion();
+  owners.forEach((o,i)=>{const el=document.getElementById('recog'+i);if(el)el.textContent='S$'+Math.round(recognised(o).total).toLocaleString()+'/mo';});
   const a=calcAll(0,0);
-  document.getElementById('iwaa').innerHTML=a.iwaa+'<small> yrs IWAA</small>';
-  let e=`<tr><td>Recognised income (combined)</td><td>${fmt(a.inc)}/mo</td></tr>`;
-  e+=`<tr class="sub"><td>Monthly debt</td><td>${fmt(a.debt)}/mo</td></tr>`;
-  e+=`<tr><td>TDSR 55% capacity</td><td>${fmt(a.tdsrPay)}/mo</td></tr>`;
-  if(isMSR(pt))e+=`<tr><td>MSR 30% capacity</td><td>${fmt(a.msrPay)}/mo</td></tr>`;
-  e+=`<tr class="sub"><td>Max loan by income</td><td>${fmt(a.loanInc)}</td></tr>`;
-  e+=`<tr class="sub"><td>Max loan by LTV (${a.ltvEff||0}%)</td><td>${a.P>0?fmt(a.loanLtv):'—'}</td></tr>`;
-  e+=`<tr class="tot"><td>Max Loan</td><td>${fmt(a.maxLoan)}</td></tr>`;
-  document.getElementById('elig').innerHTML=e;
-  // notes
+  const ltvNow=num(document.getElementById('ltv').value)||num(ltvIntended);
+  function eligCalc(inc,debt,ageT,useMSR){
+    const ext=isResidential(pt)&&num(tenure)>stdTenureCap(pt);
+    const propCap=isResidential(pt)?(ext?extTenureCap(pt):stdTenureCap(pt)):extTenureCap(pt);
+    const ageBase=isResidential(pt)?(ext?75:65):65;
+    let mt=Math.min(propCap,Math.max(0,ageBase-(ageT||0))); if(mt<1)mt=0;
+    const n=mt*12,r=num(stress)/100/12;
+    const cap=useMSR?inc*0.30:Math.max(inc*0.55-debt,0);
+    const ratio=inc>0?(useMSR?cap/inc*100:(cap+debt)/inc*100):0;
+    const ml=n>0?pv(cap,r,n):0, mp=ltvNow>0?ml/(ltvNow/100):0;
+    return{mt,ml,mp,ratio};
+  }
+  function eligTrio(title,x,badge){const head=(title||badge)?`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:9px 0 4px;flex-wrap:wrap;"><span style="color:var(--red);font-weight:700;font-size:12.5px;">${title||''}</span><span>${badge||''}</span></div>`:'';return head+`<div style="display:flex;gap:8px;margin-bottom:4px;"><div style="flex:1;"><div class="ebar"></div><div class="ev">${x.mt} yrs</div><div class="el">Max Loan Tenure</div></div><div style="flex:1.3;"><div class="ebar f"></div><div class="ev">${fmt(x.ml)}</div><div class="el">Max Loan Amount</div></div><div style="flex:1.3;"><div class="ebar f"></div><div class="ev">${x.mp>0?fmt(x.mp):'—'}</div><div class="el">Max Property Price</div></div></div>`;}
+  const multi=owners.length>1;
+  // FAIL check at the DESIRED loan (property price x effective LTV): show TDSR/MSR % in red only when over the limit
+  const effL=num(document.getElementById('ltv').value)||num(ltvIntended);
+  const desiredLoan=(a.P>0&&effL>0)?a.P*effL/100:0;
+  let failBadge='';
+  if(desiredLoan>0&&a.inc>0){
+    const r=num(stress)/100/12,n=num(tenure)*12;
+    const pay=n>0?(r===0?desiredLoan/n:desiredLoan*r/(1-Math.pow(1+r,-n))):0;
+    const dT=(pay+a.debt)/a.inc*100, dM=pay/a.inc*100;
+    if(dT>55.5)failBadge+=`<span style="color:var(--red);font-weight:800;font-size:13px;">TDSR ${dT.toFixed(0)}% &#10007;</span> `;
+    if(isMSR(pt)&&dM>30.5)failBadge+=`<span style="color:var(--red);font-weight:800;font-size:13px;">MSR ${dM.toFixed(0)}% &#10007;</span>`;
+  }
+  let ind='';owners.forEach((o,i)=>{ind+=eligTrio(multi?'Home owner '+(i+1):'',eligCalc(recognised(o).total,ownerDebt(o),o.age,false),multi?'':failBadge);});
+  document.getElementById('indivElig').innerHTML=ind;
+  document.getElementById('indivTdsrH').textContent=multi?'Individual TDSR Eligibility':'TDSR Eligibility';
+  document.getElementById('combTdsrH').style.display=multi?'':'none';
+  document.getElementById('combElig').style.display=multi?'':'none';
+  if(multi){let comb=eligTrio('',eligCalc(a.inc,a.debt,a.iwaa,false),failBadge);comb+=`<div style="margin-top:2px;"><div class="ev">${a.iwaa} years</div><div class="el">IWAA</div></div>`;document.getElementById('combElig').innerHTML=comb;}
+  const msrSec=document.getElementById('msrSec');
+  if(isMSR(pt)){msrSec.style.display='';let mh='';owners.forEach((o,i)=>{mh+=eligTrio(multi?'Home owner '+(i+1):'',eligCalc(recognised(o).total,ownerDebt(o),o.age,true),'');});if(multi)mh+=eligTrio('Combined',eligCalc(a.inc,a.debt,a.iwaa,true),'');document.getElementById('msrElig').innerHTML=mh;}else msrSec.style.display='none';
   document.getElementById('txnote').textContent={purchase:'Purchase — residential LTV auto-caps by tenure bracket.',refinance:'Refinance — extended tenure allowed, LTV stays at purchase level.',cashout:'Cash-Out — HDB not allowed; EC/Private only.'}[tx];
   document.getElementById('ptnote').textContent=isResidential(pt)?`${pt.toUpperCase()} · ${isMSR(pt)?'MSR + TDSR':'TDSR only'} · std tenure ${stdTenureCap(pt)}y / extended ${extTenureCap(pt)}y`:`${pt[0].toUpperCase()+pt.slice(1)} · TDSR only · LTV & Stress blank + uncapped (>100% ok) · 100% cash, no CPF`;
   document.getElementById('tencap').textContent=isResidential(pt)?`(max ${extTenureCap(pt)})`:'';
   const rc=isResidential(pt)?residentialLtvCap():{extended:false};
-  document.getElementById('elignote').innerHTML=a.inc<=0?'Enter income to compute.':(rc.extended&&tx==='purchase'?'Tenure is EXTENDED → LTV auto-capped to '+rc.cap+'%. Lower the tenure to restore your LTV.':'');
+  document.getElementById('elignote').innerHTML=(rc.extended&&tx==='purchase')?'Tenure is EXTENDED → LTV auto-capped to '+rc.cap+'%.':'';
 
-  // step 2 boost
   const b=calcAll(pledgeX,showX);
-  const inc=b.maxLoan-a.maxLoan;
-  const owners2=owners.length;
-  document.getElementById('joint').textContent=owners2>1?'This is a joint-name show/pledge.':'';
-  let bt=`<tr><td>Current max loan</td><td>${fmt(a.maxLoan)}</td></tr>`;
-  bt+=`<tr class="sub"><td>Income boost from pledge/show</td><td>+${fmt(b.boost)}/mo</td></tr>`;
-  bt+=`<tr class="tot"><td>New max loan</td><td>${fmt(b.maxLoan)}</td></tr>`;
-  bt+=`<tr><td>Loan increase</td><td>${inc>0?'+':''}${fmt(inc)}</td></tr>`;
-  document.getElementById('boost').innerHTML=bt;
-  document.getElementById('boostnote').textContent=(b.limitedBy==='LTV'&&inc<=0)?'Already at the LTV ceiling — pledging more won\'t raise the loan (raise the LTV or price).':'';
+  const curEFA=owners.reduce((s,o)=>s+(o.inc.pledged?num(o.pledgeFund):0)+(o.inc.unpledged?num(o.showFund):0),0)+num(pledgeX)+num(showX);
+  document.getElementById('efaStats').innerHTML=`<div><div class="ev">${fmt(curEFA)}</div><div class="el">Current EFA Amount</div></div><div><div class="ev">${fmt(b.maxLoan)}</div><div class="el">Max Loan Amount</div></div>`;
+  document.getElementById('efaPrice').textContent=(b.P>0?fmt(b.P):'S$0')+' Property Price';
+  document.getElementById('pbarFill').style.width=(b.P>0?Math.min(100,b.maxLoan/b.P*100):0)+'%';
+  document.getElementById('legLoan').textContent='Max Loan: '+fmt(b.maxLoan);
+  document.getElementById('legDown').textContent='Downpayment: '+fmt(b.down);
+  document.getElementById('legTenure').textContent='Loan Tenure: '+(num(tenure)||0)+' years';
+  const rE=num(stress)/100/12, nE=num(tenure)*12, pvf=nE>0?(rE===0?nE:(1-Math.pow(1+rE,-nE))/rE):0;
+  const dI=pvf>0?num(incBy)/pvf:0;          // extra monthly REPAYMENT capacity needed
+  const svc=isMSR(pt)?0.30:0.55;            // extra income only counts at the servicing ratio
+  document.getElementById('shouldPledge').textContent=fmt(dI*48/svc);
+  document.getElementById('shouldShow').textContent=fmt(dI*48/(0.30*svc));
+  document.getElementById('loanInc').textContent=fmt(Math.max(b.maxLoan-a.maxLoan,0));
 
-  // step 3 summary (uses boosted values)
-  document.getElementById('finalLoan').textContent=fmt(b.maxLoan);
-  document.getElementById('limitnote').textContent='Limited by '+ (b.limitedBy==='LTV'?'LTV ceiling':(b.limitedBy==='MSR'?'MSR (30%)':'TDSR (55%)'));
-  let s=`<tr><td>Property price</td><td>${b.P>0?fmt(b.P):'—'}</td></tr>`;
-  s+=`<tr><td>Max loan</td><td>${fmt(b.maxLoan)}</td></tr>`;
-  s+=`<tr class="sub"><td>Total pledge</td><td>${fmt(parseFloat(pledgeX)||0)}</td></tr>`;
-  s+=`<tr class="sub"><td>Total show</td><td>${fmt(parseFloat(showX)||0)}</td></tr>`;
-  if(b.P>0){s+=`<tr class="tot"><td>Downpayment</td><td>${fmt(b.down)}</td></tr>`;
-    if(isResidential(pt)){s+=`<tr class="sub"><td>&nbsp;&nbsp;Cash (min ${Math.round(b.cf*100)}%)</td><td>${fmt(b.cash)}</td></tr>`;s+=`<tr class="sub"><td>&nbsp;&nbsp;CPF and/or Cash</td><td>${fmt(b.cpf)}</td></tr>`;}
-    else{s+=`<tr class="sub"><td>&nbsp;&nbsp;Cash (100%)</td><td>${fmt(b.down)}</td></tr>`;}}
-  document.getElementById('summary').innerHTML=s;
+  document.getElementById('sumPrice').textContent=(b.P>0?fmt(b.P):'S$0')+' Property Price';
+  document.getElementById('sumBar').style.width=(b.P>0?Math.min(100,b.maxLoan/b.P*100):0)+'%';
+  document.getElementById('sumLegLoan').textContent='Max Loan: '+fmt(b.maxLoan);
+  document.getElementById('sumLegDown').textContent='Downpayment: '+fmt(b.down);
+  document.getElementById('sumLegTen').textContent='Loan Tenure: '+(num(tenure)||0)+' years';
+  const totPledge=owners.reduce((s,o)=>s+(o.inc.pledged?num(o.pledgeFund):0),0)+num(pledgeX);
+  const totShow=owners.reduce((s,o)=>s+(o.inc.unpledged?num(o.showFund):0),0)+num(showX);
+  const rI=num(stress)/100/12,nI=num(tenure)*12,instal=(nI>0&&rI>0)?b.maxLoan*rI/(1-Math.pow(1+rI,-nI)):(nI>0?b.maxLoan/nI:0);
+  const limitTxt='The amount assessed is based on your '+(b.limitedBy==='MSR'?'MSR limit. (Mortgage Servicing Ratio)':(b.limitedBy==='LTV'?'LTV limit.':'TDSR limit. (Total Debt Servicing Ratio)'));
+  const ic={bar:'<svg viewBox="0 0 24 24" width="42" height="42" fill="currentColor"><path d="M4 9h4v11H4zM10 4h4v16h-4zM16 13h4v7h-4z"/></svg>',wallet:'<svg viewBox="0 0 24 24" width="42" height="42" fill="currentColor"><path d="M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zm-5 5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>',book:'<svg viewBox="0 0 24 24" width="42" height="42" fill="currentColor"><path d="M6 2h12a2 2 0 0 1 2 2v18l-8-4-8 4V4a2 2 0 0 1 2-2z"/></svg>',dollar:'<svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M16 6.5C16 5 14.2 4 12 4S8 5 8 6.8 9.8 9 12 9.5s4 1.5 4 3.2S14.2 16 12 16s-4-1-4-2.5"/></svg>',line:'<svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16"/><path d="M7 14l3-4 3 3 5-6"/></svg>'};
+  function card(icon,color,val,label,sub){return `<div style="display:flex;gap:14px;margin-bottom:22px;align-items:flex-start;"><div style="color:var(--red);flex:0 0 46px;">${icon}</div><div style="flex:1;"><div style="width:28px;height:3px;background:${color};margin-bottom:7px;"></div><div style="font-size:20px;font-weight:800;">${val}</div><div style="font-size:13px;margin-top:3px;">${label}</div>${sub?`<div style="font-size:12px;color:var(--gray);margin-top:4px;line-height:1.5;">${sub}</div>`:''}</div></div>`;}
+  let cards=card(ic.bar,'var(--red)',fmt(b.maxLoan),'Maximum Loan',limitTxt);
+  cards+=card(ic.wallet,'#C724B1',fmt(totPledge),'Total Pledge Amount','');
+  cards+=card(ic.book,'#3B7DED',fmt(totShow),'Total Show Amount','');
+  const cashSub=isResidential(pt)?`CPF and/or Cash ${fmt(b.cpf)}<br>Cash ${fmt(b.cash)}`:`Cash ${fmt(b.down)}`;
+  cards+=card(ic.dollar,'var(--redfade)',fmt(b.down),'Downpayment',cashSub);
+  cards+=card(ic.line,'#F5A623',fmt(instal),'Estimated Monthly Instalment','Interest Rate '+(num(stress)||0)+'%');
+  document.getElementById('sumCards').innerHTML=cards;
 }
 
-/* ============ STEP NAV ============ */
-function goStep(n){step=n;
-  document.getElementById('page1').classList.toggle('hidden',n!==1);
-  document.getElementById('page2').classList.toggle('hidden',n!==2);
-  document.getElementById('page3').classList.toggle('hidden',n!==3);
-  [1,2,3].forEach(i=>document.getElementById('ind'+i).classList.toggle('on',i<=n));
-  renderNav();window.scrollTo(0,0);
-}
-function renderNav(){
-  const nav=document.getElementById('nav');
-  if(step===1) nav.innerHTML=`<button class="btn-s" onclick="resetAll()">Reset</button><button class="btn-s" onclick="fillSample()">Sample</button><button class="btn-p" onclick="goStep(2)">Next: Pledge/Show</button>`;
-  else if(step===2) nav.innerHTML=`<button class="btn-s" onclick="goStep(1)">Back</button><button class="btn-p" onclick="goStep(3)">Next: Summary</button>`;
-  else nav.innerHTML=`<button class="btn-s" onclick="goStep(2)">Back</button><button class="btn-s" onclick="goStep(1)">Edit inputs</button>`;
-}
+function goStep(n){if(n>1&&step<n&&n===3){} step=n;
+  document.getElementById('page1').classList.toggle('hidden',n!==1);document.getElementById('page2').classList.toggle('hidden',n!==2);document.getElementById('page3').classList.toggle('hidden',n!==3);
+  document.getElementById('ind2').classList.toggle('on',n>=2);document.getElementById('ind3').classList.toggle('on',n>=3);
+  document.getElementById('ln1').classList.toggle('on',n>=2);document.getElementById('ln2').classList.toggle('on',n>=3);
+  renderNav();window.scrollTo(0,0);}
+function renderNav(){const nav=document.getElementById('nav');
+  if(step===1)nav.innerHTML=`<button class="btn-s" onclick="resetAll()">Reset</button><button class="btn-s" onclick="fillSample()">Sample</button><button class="btn-p" onclick="goStep(2)">Next</button>`;
+  else if(step===2)nav.innerHTML=`<button class="btn-s" onclick="goStep(1)">Back</button><button class="btn-p" onclick="goStep(3)">Next</button>`;
+  else nav.innerHTML=`<button class="btn-s" onclick="goStep(2)">Back</button>`;}
 
-/* ============ SAMPLE / RESET ============ */
 function fillSample(){
-  // income-constrained sample so Step 2 (pledge/show) visibly raises the loan
   owners=[newOwner(35),newOwner(45)];
   owners[0].inc={salary:true,noa:false,tenancy:true,pledged:false,unpledged:false};owners[0].basic='5000';owners[0].tenancy='1000';
-  owners[0].liab={car:true,personal:false,guarantor:false,card:false,overdraft:false};owners[0].car='500';
+  owners[0].liab={car:true,personal:false,guarantor:false,card:true,overdraft:false};owners[0].car='500';owners[0].cardCount=1;owners[0].cardVals=['0'];
   owners[1].inc={salary:false,noa:true,tenancy:false,pledged:false,unpledged:false};owners[1].noa='60000';
   pt='hdb';tx='purchase';price='800000';tenure='25';stress='3.5';ltvIntended='75';pledgeX='';showX='';
   syncTop();renderOwners();
-  document.getElementById('price').value=price;document.getElementById('tenure').value=tenure;document.getElementById('stress').value=stress;
+  document.getElementById('price').value=commas(price);document.getElementById('tenure').value=tenure;document.getElementById('stress').value=stress;
   document.getElementById('pledgeX').value='';document.getElementById('showX').value='';
   applyLtvCap();recalc();goStep(1);
 }
-function resetAll(){owners=[newOwner(35),newOwner(40)];tx='purchase';pt='private';price='';tenure='';stress=defaultStress('private');ltvIntended=defaultLtv('private');pledgeX='';showX='';
-  syncTop();renderOwners();document.getElementById('price').value='';document.getElementById('tenure').value='';document.getElementById('stress').value=stress;document.getElementById('pledgeX').value='';document.getElementById('showX').value='';applyLtvCap();recalc();goStep(1);}
+function resetAll(){owners=[newOwner(35),newOwner(40)];tx='purchase';pt='private';price='';tenure='';stress=defaultStress('private');ltvIntended=defaultLtv('private');pledgeX='';showX='';incBy='';
+  syncTop();renderOwners();document.getElementById('price').value='';document.getElementById('tenure').value='';document.getElementById('stress').value=stress;['pledgeX','showX','incBy'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});applyLtvCap();recalc();goStep(1);}
 function syncTop(){[...document.querySelectorAll('#txseg button')].forEach(x=>x.classList.toggle('sel',x.dataset.tx===tx));[...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x.dataset.pt===pt));document.querySelector('#txseg [data-tx="cashout"]').disabled=(pt==='hdb');}
-
-function tick(){const d=new Date();document.getElementById('clock').textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
-tick();setInterval(tick,15000);
 
 stress=defaultStress('private');ltvIntended=defaultLtv('private');
 renderOwners();document.getElementById('stress').value=stress;applyLtvCap();recalc();renderNav();
