@@ -70,16 +70,20 @@
   .stp{width:26px;height:26px;border-radius:50%;border:none;background:#fff;color:var(--red);font-size:16px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:pointer;font-family:inherit;}
   .add{width:calc(100% - 50px);margin:12px 25px;background:#fff;border:1.5px dashed var(--red);color:var(--red);border-radius:6px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
   .row2{display:flex;gap:10px;} .row2 .field{flex:1;}
-  .tenlabel{font-size:15px;font-weight:800;color:var(--ink);margin:4px 2px 12px;}
+  .tenlabel{font-size:15px;font-weight:800;color:var(--ink);margin:4px 2px 22px;}
   .tenlabel b{font-weight:800;}
-  input.tslider{--pct:0%;-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;outline:none;margin:2px 0 6px;padding:0;cursor:pointer;
+  .sliderwrap{position:relative;margin:0 0 4px;}
+  input.tslider{--pct:0%;-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;outline:none;margin:6px 0 10px;padding:0;cursor:pointer;
     background:
       linear-gradient(90deg,var(--red) var(--pct),rgba(0,0,0,0) var(--pct)),
       radial-gradient(circle,#bdbdbd 1.6px,rgba(0,0,0,0) 2px) 6px center / 34px 100% repeat-x,
       #e4e4e4;}
-  input.tslider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 0 0 7px var(--redfade);}
-  input.tslider::-moz-range-thumb{width:26px;height:26px;border:none;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 0 0 7px var(--redfade);}
-  .extrow{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;color:var(--ink);margin:2px 2px 15px;cursor:pointer;}
+  input.tslider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 0 0 5px var(--redfade);}
+  input.tslider::-moz-range-thumb{width:18px;height:18px;border:none;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 0 0 5px var(--redfade);}
+  .tenbubble{position:absolute;bottom:26px;transform:translateX(-50%);background:var(--red);color:#fff;font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;}
+  .tenbubble.show{opacity:1;}
+  .tenbubble::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--red);}
+  .extrow{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;color:var(--ink);margin:8px 2px 20px;cursor:pointer;}
   .extrow input{width:19px;height:19px;accent-color:var(--red);cursor:pointer;}
   select.cnt{font-family:inherit;font-size:14px;padding:8px 10px;border-radius:5px;border:1px solid #ccc;background:#fff;margin-bottom:12px;width:100%;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -142,9 +146,9 @@ Summary</span></div>
         <div class="field" id="wrap_price"><div class="fl">Property Price (Purchase Price)</div><div class="fr"><span class="px">S$</span><input id="price" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div>
         <div class="field" id="wrap_ltv"><div class="fl">Loan-to-Value <span id="ltvcap" style="font-size:10px;"></span></div><div class="fr"><input id="ltv" type="text" inputmode="decimal" placeholder="—" oninput="onLtvInput()"><span class="px">%</span></div></div>
         <div class="field" id="wrap_stress"><div class="fl">Stress-Test Rate</div><div class="fr"><input id="stress" type="text" inputmode="decimal" placeholder="—" oninput="onInput()"><span class="px">%</span></div></div>
-        <div id="wrap_tenure" style="margin:12px 2px 0;">
+        <div id="wrap_tenure" style="margin:22px 2px 4px;">
           <div class="tenlabel">Loan Tenure: <b id="tenval">—</b> <span id="tencap" style="font-size:11px;font-weight:600;color:var(--label);"></span></div>
-          <input id="tenure" class="tslider" type="range" min="0" max="30" step="1" value="0" oninput="onTenure(this)">
+          <div class="sliderwrap"><input id="tenure" class="tslider" type="range" min="0" max="30" step="1" value="0" oninput="onTenure(this)"><div id="tenbubble" class="tenbubble"></div></div>
           <label class="extrow"><input type="checkbox" id="extTen" onchange="toggleExt(this.checked)">Extension of Loan Tenure</label>
         </div>
         <div class="sec-h" style="margin:6px 0 6px;">Number of owners</div>
@@ -319,7 +323,8 @@ function stepAge(i,d){owners[i].age=Math.min(99,Math.max(18,(owners[i].age||30)+
 function setExisting(i,val){readFields();owners[i].existingLoans=parseInt(val)||0;applyLtvCap();recalc();}
 function setNumOwners(n){readFields();n=parseInt(n)||1;while(owners.length<n)owners.push(newOwner(30));owners.length=n;renderOwners();recalc();}
 function onInput(){readFields();recalc();}
-function onTenure(el){document.getElementById('tenval').textContent=(+el.value>0)?(el.value+' years'):'—';onInput();}
+function onTenure(el){document.getElementById('tenval').textContent=(+el.value>0)?(el.value+' years'):'—';showTenBubble(el);onInput();}
+function showTenBubble(el){const b=document.getElementById('tenbubble');if(!b)return;const mn=+el.min||0,mx=+el.max||1,val=+el.value;const frac=mx>mn?(val-mn)/(mx-mn):0;const thumb=18,w=el.clientWidth;b.style.left=(frac*(w-thumb)+thumb/2)+'px';b.textContent=val+(val===1?' yr':' yrs');b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),1000);}
 function toggleExt(v){extendTenure=v;onInput();}
 function syncTenureSlider(){const tsl=document.getElementById('tenure');if(!tsl)return;const tmax=extendTenure?extTenureCap(pt):stdTenureCap(pt);tsl.max=tmax;if(num(tenure)>tmax){tenure=String(tmax);tsl.value=tmax;}document.getElementById('tenval').textContent=(num(tenure)>0)?(num(tenure)+' years'):'—';const pct=tmax>0?(num(tenure)/tmax*100):0;tsl.style.setProperty('--pct',pct+'%');const cb=document.getElementById('extTen');if(cb)cb.checked=extendTenure;document.getElementById('tencap').textContent='(max '+tmax+')';}
 function onLtvInput(){ltvIntended=v('ltv');readFields();applyLtvCap();recalc();}
