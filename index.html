@@ -109,10 +109,10 @@
   .field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .field input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-  /* Age with stepper buttons */
+  /* Age — type-in field */
   .age-field { width: 200px; }
   .age-field .frow { align-items: center; }
-  .age-field input { text-align: center; font-size: 19px; }
+  .age-field input { text-align: left; font-size: 18px; }
   .stepbtn {
     width: 30px; height: 30px; border-radius: 50%;
     border: none; cursor: pointer;
@@ -392,9 +392,7 @@ function personSection(i, hidden) {
       <div class="field age-field">
         <div class="flabel">Age</div>
         <div class="frow">
-          <button class="stepbtn" onclick="stepAge(${i},-1)">&#8722;</button>
-          <input type="number" id="age${i}" min="18" max="99" value="30" oninput="recalc()">
-          <button class="stepbtn" onclick="stepAge(${i},1)">+</button>
+          <input type="number" id="age${i}" min="18" max="99" value="30" inputmode="numeric" placeholder="Age" oninput="recalc()">
         </div>
       </div>
 

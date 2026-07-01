@@ -66,10 +66,21 @@
   .miniseg button:disabled{opacity:.4;cursor:not-allowed;}
   .age{display:flex;align-items:center;gap:10px;margin:6px 0 4px;}
   .age .lbl{font-size:12px;color:var(--gray);font-weight:600;}
-  .age input{width:52px;text-align:center;font-size:16px;font-weight:700;border:none;background:var(--field);border-radius:5px;padding:6px 0;font-family:inherit;}
+  .age input{width:70px;text-align:left;font-size:16px;font-weight:700;border:none;background:var(--field);border-radius:5px;padding:6px 10px;font-family:inherit;}
   .stp{width:26px;height:26px;border-radius:50%;border:none;background:#fff;color:var(--red);font-size:16px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:pointer;font-family:inherit;}
   .add{width:calc(100% - 50px);margin:12px 25px;background:#fff;border:1.5px dashed var(--red);color:var(--red);border-radius:6px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
   .row2{display:flex;gap:10px;} .row2 .field{flex:1;}
+  .tenlabel{font-size:15px;font-weight:800;color:var(--ink);margin:4px 2px 12px;}
+  .tenlabel b{font-weight:800;}
+  input.tslider{--pct:0%;-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;outline:none;margin:2px 0 6px;padding:0;cursor:pointer;
+    background:
+      linear-gradient(90deg,var(--red) var(--pct),rgba(0,0,0,0) var(--pct)),
+      radial-gradient(circle,#bdbdbd 1.6px,rgba(0,0,0,0) 2px) 6px center / 34px 100% repeat-x,
+      #e4e4e4;}
+  input.tslider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 0 0 7px var(--redfade);}
+  input.tslider::-moz-range-thumb{width:26px;height:26px;border:none;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 0 0 7px var(--redfade);}
+  .extrow{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;color:var(--ink);margin:2px 2px 15px;cursor:pointer;}
+  .extrow input{width:19px;height:19px;accent-color:var(--red);cursor:pointer;}
   select.cnt{font-family:inherit;font-size:14px;padding:8px 10px;border-radius:5px;border:1px solid #ccc;background:#fff;margin-bottom:12px;width:100%;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   td{padding:6px 0;} td:last-child{text-align:right;font-weight:700;}
@@ -124,19 +135,18 @@ Summary</span></div>
 
   <main>
     <div id="page1">
-      <div class="sec"><div class="sec-h">Transaction Type</div>
-        <div class="btnrow txrow" id="txseg"><button data-tx="purchase" class="sel">Purchase</button><button data-tx="refinance">Refinance</button><button data-tx="cashout">Cash-Out</button></div>
-        <div class="note" id="txnote"></div></div>
       <div class="sec"><div class="sec-h">Property Type</div>
         <div class="btnrow ptype" id="ptype"><button data-pt="private" class="sel">Private</button><button data-pt="hdb">HDB</button><button data-pt="ec">EC</button><button data-pt="commercial">Commercial</button><button data-pt="industrial">Industrial</button></div>
         <div class="note" id="ptnote"></div></div>
       <div class="sec"><div class="sec-h">Loan Details</div>
         <div class="field" id="wrap_price"><div class="fl">Property Price (Purchase Price)</div><div class="fr"><span class="px">S$</span><input id="price" type="text" inputmode="decimal" placeholder="0" oninput="onMoney(this)"></div></div>
-        <div class="row2">
-          <div class="field" id="wrap_ltv"><div class="fl">Loan-to-Value <span id="ltvcap" style="font-size:10px;"></span></div><div class="fr"><input id="ltv" type="text" inputmode="decimal" placeholder="—" oninput="onLtvInput()"><span class="px">%</span></div></div>
-          <div class="field" id="wrap_tenure"><div class="fl">Tenure (yrs) <span id="tencap" style="font-size:10px;"></span></div><div class="fr"><input id="tenure" type="text" inputmode="numeric" placeholder="—" oninput="onInput()"></div></div>
-        </div>
+        <div class="field" id="wrap_ltv"><div class="fl">Loan-to-Value <span id="ltvcap" style="font-size:10px;"></span></div><div class="fr"><input id="ltv" type="text" inputmode="decimal" placeholder="—" oninput="onLtvInput()"><span class="px">%</span></div></div>
         <div class="field" id="wrap_stress"><div class="fl">Stress-Test Rate</div><div class="fr"><input id="stress" type="text" inputmode="decimal" placeholder="—" oninput="onInput()"><span class="px">%</span></div></div>
+        <div id="wrap_tenure" style="margin:12px 2px 0;">
+          <div class="tenlabel">Loan Tenure: <b id="tenval">—</b> <span id="tencap" style="font-size:11px;font-weight:600;color:var(--label);"></span></div>
+          <input id="tenure" class="tslider" type="range" min="0" max="30" step="1" value="0" oninput="onTenure(this)">
+          <label class="extrow"><input type="checkbox" id="extTen" onchange="toggleExt(this.checked)">Extension of Loan Tenure</label>
+        </div>
         <div class="sec-h" style="margin:6px 0 6px;">Number of owners</div>
         <select class="cnt" id="numOwners" onchange="setNumOwners(this.value)"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select>
       </div>
@@ -206,13 +216,13 @@ const LIAB_SRC=[{k:'car',l:'Car Loan'},{k:'personal',l:'Personal Loan'},{k:'guar
 function newOwner(age){return{age,inc:{salary:false,noa:false,tenancy:false,pledged:false,unpledged:false},basic:'',variable:'',varMode:'m',noa:'',tenancy:'',pledgeFund:'',showFund:'',
   liab:{car:false,personal:false,guarantor:false,card:false,overdraft:false},car:'',personal:'',guarantor:'',cardCount:0,cardVals:[],odCount:0,odVals:[],existingLoans:0};}
 let owners=[newOwner(35)];
-let tx='purchase',pt='private',price='',tenure='',stress='',ltvIntended='',pledgeX='',showX='',step=1,efaMode='ps',incBy='';
+let tx='purchase',pt='private',price='',tenure='',stress='',ltvIntended='',pledgeX='',showX='',step=1,efaMode='ps',incBy='',extendTenure=false;
 
 const isResidential=t=>(t==='private'||t==='hdb'||t==='ec');
 const isMSR=t=>(t==='hdb'||t==='ec');
 const stdTenureCap=t=>(t==='hdb'?25:30);
 const extTenureCap=t=>(t==='hdb'?30:35);
-const defaultStress=t=>isResidential(t)?'3.5':'';
+const defaultStress=t=>isResidential(t)?'4':'';
 const defaultLtv=t=>isResidential(t)?'75':'';
 function recognised(o){let emp=0;const basic=num(o.basic);
   if(o.inc.salary){let used=0;const ve=num(o.variable)>0;const vm=o.varMode==='a'?num(o.variable)/12:num(o.variable);
@@ -266,7 +276,7 @@ function renderOwners(){
       for(let j=0;j<o.odCount;j++)lf+=mf('od'+i+'_'+j,'Unsecured Overdraft '+(j+1));}
     return `<div class="ownerbar"><span class="rt">Home Owner ${i+1} Information</span><span style="display:flex;align-items:center;gap:10px;"><span class="sub" id="recog${i}">S$${Math.round(r.total).toLocaleString()}/mo</span><span class="ic">&#9650;</span></span></div>
       <div class="ownerbody">
-      <div class="age"><span class="lbl">Age</span><button class="stp" onclick="stepAge(${i},-1)">&minus;</button><input type="number" value="${o.age}" oninput="setAge(${i},this.value)"><button class="stp" onclick="stepAge(${i},1)">+</button>
+      <div class="age"><span class="lbl">Age</span><input type="number" inputmode="numeric" min="18" max="99" placeholder="Age" value="${o.age}" oninput="setAge(${i},this.value)">
       <span class="lbl" style="margin-left:auto;">Existing loans</span><select class="cnt" style="width:auto;margin:0;" onchange="setExisting(${i},this.value)"><option ${o.existingLoans==0?'selected':''}>0</option><option ${o.existingLoans==1?'selected':''}>1</option><option ${o.existingLoans==2?'selected':''}>2</option></select></div>
       <div class="chips-label">Income Sources — select all that apply</div><div class="chips">${inc}</div>${f}
       <div class="chips-label">Loans / Liabilities — select all that apply</div><div class="chips">${liab}</div>${lf}
@@ -309,14 +319,15 @@ function stepAge(i,d){owners[i].age=Math.min(99,Math.max(18,(owners[i].age||30)+
 function setExisting(i,val){readFields();owners[i].existingLoans=parseInt(val)||0;applyLtvCap();recalc();}
 function setNumOwners(n){readFields();n=parseInt(n)||1;while(owners.length<n)owners.push(newOwner(30));owners.length=n;renderOwners();recalc();}
 function onInput(){readFields();recalc();}
+function onTenure(el){document.getElementById('tenval').textContent=(+el.value>0)?(el.value+' years'):'—';onInput();}
+function toggleExt(v){extendTenure=v;onInput();}
+function syncTenureSlider(){const tsl=document.getElementById('tenure');if(!tsl)return;const tmax=extendTenure?extTenureCap(pt):stdTenureCap(pt);tsl.max=tmax;if(num(tenure)>tmax){tenure=String(tmax);tsl.value=tmax;}document.getElementById('tenval').textContent=(num(tenure)>0)?(num(tenure)+' years'):'—';const pct=tmax>0?(num(tenure)/tmax*100):0;tsl.style.setProperty('--pct',pct+'%');const cb=document.getElementById('extTen');if(cb)cb.checked=extendTenure;document.getElementById('tencap').textContent='(max '+tmax+')';}
 function onLtvInput(){ltvIntended=v('ltv');readFields();applyLtvCap();recalc();}
 function setEfaMode(m){readFields();efaMode=m;document.getElementById('csBorrow').classList.toggle('sel',m==='borrow');document.getElementById('csPS').classList.toggle('sel',m==='ps');document.getElementById('efaBorrow').classList.toggle('hidden',m!=='borrow');document.getElementById('efaPS').classList.toggle('hidden',m!=='ps');recalc();}
 function resetEfa(){pledgeX='';showX='';incBy='';['pledgeX','showX','incBy'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});recalc();}
-document.getElementById('txseg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;tx=b.dataset.tx;[...document.querySelectorAll('#txseg button')].forEach(x=>x.classList.toggle('sel',x===b));readFields();applyLtvCap();recalc();});
 document.getElementById('ptype').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pt=b.dataset.pt;[...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x===b));readFields();
   if(ltvIntended===''||!isResidential(pt))ltvIntended=defaultLtv(pt);
   document.getElementById('stress').value=(stress===''||!isResidential(pt))?defaultStress(pt):stress;stress=v('stress');
-  const co=document.querySelector('#txseg [data-tx="cashout"]');if(pt==='hdb'){co.disabled=true;if(tx==='cashout'){tx='purchase';document.querySelector('#txseg [data-tx="purchase"]').classList.add('sel');co.classList.remove('sel');}}else co.disabled=false;
   applyLtvCap();recalc();});
 function applyLtvCap(){const e=document.getElementById('ltv'),lbl=document.getElementById('ltvcap');
   if(!isResidential(pt)){e.disabled=false;e.value=ltvIntended;lbl.textContent='(no cap)';return;}
@@ -325,6 +336,7 @@ function applyLtvCap(){const e=document.getElementById('ltv'),lbl=document.getEl
 function recalc(){
   const fmt=val=>'S$'+Math.round(val).toLocaleString();
   applyExclusion();
+  syncTenureSlider();
   owners.forEach((o,i)=>{const el=document.getElementById('recog'+i);if(el)el.textContent='S$'+Math.round(recognised(o).total).toLocaleString()+'/mo';});
   const a=calcAll(0,0);
   const ltvNow=num(document.getElementById('ltv').value)||num(ltvIntended);
@@ -360,9 +372,7 @@ function recalc(){
   if(multi){let comb=eligTrio('',eligCalc(a.inc,a.debt,a.iwaa,false),failBadge);comb+=`<div style="margin-top:2px;"><div class="ev">${a.iwaa} years</div><div class="el">IWAA</div></div>`;document.getElementById('combElig').innerHTML=comb;}
   const msrSec=document.getElementById('msrSec');
   if(isMSR(pt)){msrSec.style.display='';let mh='';owners.forEach((o,i)=>{mh+=eligTrio(multi?'Home owner '+(i+1):'',eligCalc(recognised(o).total,ownerDebt(o),o.age,true),'');});if(multi)mh+=eligTrio('Combined',eligCalc(a.inc,a.debt,a.iwaa,true),'');document.getElementById('msrElig').innerHTML=mh;}else msrSec.style.display='none';
-  document.getElementById('txnote').textContent={purchase:'Purchase — residential LTV auto-caps by tenure bracket.',refinance:'Refinance — extended tenure allowed, LTV stays at purchase level.',cashout:'Cash-Out — HDB not allowed; EC/Private only.'}[tx];
   document.getElementById('ptnote').textContent=isResidential(pt)?`${pt.toUpperCase()} · ${isMSR(pt)?'MSR + TDSR':'TDSR only'} · std tenure ${stdTenureCap(pt)}y / extended ${extTenureCap(pt)}y`:`${pt[0].toUpperCase()+pt.slice(1)} · TDSR only · LTV & Stress blank + uncapped (>100% ok) · 100% cash, no CPF`;
-  document.getElementById('tencap').textContent=isResidential(pt)?`(max ${extTenureCap(pt)})`:'';
   const rc=isResidential(pt)?residentialLtvCap():{extended:false};
   document.getElementById('elignote').innerHTML=(rc.extended&&tx==='purchase')?'Tenure is EXTENDED → LTV auto-capped to '+rc.cap+'%.':'';
 
@@ -416,15 +426,15 @@ function fillSample(){
   owners[0].inc={salary:true,noa:false,tenancy:true,pledged:false,unpledged:false};owners[0].basic='5000';owners[0].tenancy='1000';
   owners[0].liab={car:true,personal:false,guarantor:false,card:true,overdraft:false};owners[0].car='500';owners[0].cardCount=1;owners[0].cardVals=['0'];
   owners[1].inc={salary:false,noa:true,tenancy:false,pledged:false,unpledged:false};owners[1].noa='60000';
-  pt='hdb';tx='purchase';price='800000';tenure='25';stress='3.5';ltvIntended='75';pledgeX='';showX='';
+  pt='hdb';tx='purchase';price='800000';tenure='25';stress='4';ltvIntended='75';pledgeX='';showX='';extendTenure=false;
   syncTop();renderOwners();
   document.getElementById('price').value=commas(price);document.getElementById('tenure').value=tenure;document.getElementById('stress').value=stress;
   document.getElementById('pledgeX').value='';document.getElementById('showX').value='';
   applyLtvCap();recalc();goStep(1);
 }
-function resetAll(){owners=[newOwner(35)];tx='purchase';pt='private';price='';tenure='';stress=defaultStress('private');ltvIntended=defaultLtv('private');pledgeX='';showX='';incBy='';
-  syncTop();renderOwners();document.getElementById('price').value='';document.getElementById('tenure').value='';document.getElementById('stress').value=stress;['pledgeX','showX','incBy'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});applyLtvCap();recalc();goStep(1);}
-function syncTop(){[...document.querySelectorAll('#txseg button')].forEach(x=>x.classList.toggle('sel',x.dataset.tx===tx));[...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x.dataset.pt===pt));document.querySelector('#txseg [data-tx="cashout"]').disabled=(pt==='hdb');}
+function resetAll(){owners=[newOwner(35)];tx='purchase';pt='private';price='';tenure='';stress=defaultStress('private');ltvIntended=defaultLtv('private');pledgeX='';showX='';incBy='';extendTenure=false;
+  syncTop();renderOwners();document.getElementById('price').value='';document.getElementById('tenure').value=0;document.getElementById('stress').value=stress;['pledgeX','showX','incBy'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});applyLtvCap();recalc();goStep(1);}
+function syncTop(){[...document.querySelectorAll('#ptype button')].forEach(x=>x.classList.toggle('sel',x.dataset.pt===pt));}
 
 stress=defaultStress('private');ltvIntended=defaultLtv('private');
 renderOwners();document.getElementById('stress').value=stress;applyLtvCap();recalc();renderNav();
