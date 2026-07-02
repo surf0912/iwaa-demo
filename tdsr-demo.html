@@ -246,7 +246,7 @@ function ownerDebt(o){let d=0;if(o.liab.car)d+=num(o.car);if(o.liab.personal)d+=
   return d;}
 function ltvCapFor(lc,ext){return (ext?[55,25,15]:[75,45,35])[Math.min(lc,2)];}
 function minCashFrac(t,lc,ext){if(!isResidential(t))return 1;if(lc===0)return ext?0.10:0.05;return 0.25;}
-function residentialLtvCap(){const me=Math.max(...owners.map(o=>o.existingLoans),0);let ext=num(tenure)>stdTenureCap(pt);if(tx!=='purchase')ext=false;return{cap:ltvCapFor(me,ext),extended:ext,maxExisting:me};}
+function residentialLtvCap(){const me=Math.max(...owners.map(o=>o.existingLoans),0);let ext=extendTenure;if(tx!=='purchase')ext=false;return{cap:ltvCapFor(me,ext),extended:ext,maxExisting:me};}
 function pv(p,r,n){if(r===0)return p*n;return p*(1-Math.pow(1+r,-n))/r;}
 function calcAll(eP,eS){
   let inc=0,wt=0,debt=0;owners.forEach(o=>{const r=recognised(o);inc+=r.total;wt+=r.total*(o.age||0);debt+=ownerDebt(o);});
@@ -333,7 +333,7 @@ function onInput(){readFields();recalc();}
 function toggleOwner(i){readFields();owners[i].collapsed=!owners[i].collapsed;const cards=document.querySelectorAll('#owners .ownercard');if(cards[i])cards[i].classList.toggle('collapsed',owners[i].collapsed);}
 function onTenure(el){document.getElementById('tenval').textContent=(+el.value>0)?(el.value+' years'):'—';showTenBubble(el);onInput();}
 function showTenBubble(el){const b=document.getElementById('tenbubble');if(!b)return;const mn=+el.min||0,mx=+el.max||1,val=+el.value;const frac=mx>mn?(val-mn)/(mx-mn):0;const thumb=18,w=el.clientWidth;b.style.left=(frac*(w-thumb)+thumb/2)+'px';b.textContent=val+(val===1?' yr':' yrs');b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),1000);}
-function toggleExt(v){extendTenure=v;onInput();}
+function toggleExt(v){extendTenure=v;readFields();applyLtvCap();recalc();}
 function syncTenureSlider(){const tsl=document.getElementById('tenure');if(!tsl)return;const tmax=extendTenure?extTenureCap(pt):stdTenureCap(pt);tsl.max=tmax;if(num(tenure)>tmax){tenure=String(tmax);tsl.value=tmax;}document.getElementById('tenval').textContent=(num(tenure)>0)?(num(tenure)+' years'):'—';const pct=tmax>0?(num(tenure)/tmax*100):0;tsl.style.setProperty('--pct',pct+'%');const cb=document.getElementById('extTen');if(cb)cb.checked=extendTenure;document.getElementById('tencap').textContent='(max '+tmax+')';}
 function onLtvInput(){ltvIntended=v('ltv');readFields();applyLtvCap();recalc();}
 function setEfaMode(m){readFields();efaMode=m;document.getElementById('csBorrow').classList.toggle('sel',m==='borrow');document.getElementById('csPS').classList.toggle('sel',m==='ps');document.getElementById('efaBorrow').classList.toggle('hidden',m!=='borrow');document.getElementById('efaPS').classList.toggle('hidden',m!=='ps');recalc();}
@@ -354,7 +354,7 @@ function recalc(){
   const a=calcAll(0,0);
   const ltvNow=num(document.getElementById('ltv').value)||num(ltvIntended);
   function eligCalc(inc,debt,ageT,useMSR){
-    const ext=isResidential(pt)&&num(tenure)>stdTenureCap(pt);
+    const ext=isResidential(pt)&&extendTenure;
     const propCap=isResidential(pt)?(ext?extTenureCap(pt):stdTenureCap(pt)):extTenureCap(pt);
     const ageBase=isResidential(pt)?(ext?75:65):65;
     let mt=Math.min(propCap,Math.max(0,ageBase-(ageT||0))); if(mt<1)mt=0;
